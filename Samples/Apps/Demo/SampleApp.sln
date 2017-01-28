@@ -1,0 +1,77 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleApp", "SampleApp.csproj", "{AF795C66-F99F-489B-AAED-C942CF810338}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microcontroller", "..\Microcontroller\Microcontroller.csproj", "{6350EFCA-B4C1-49C9-8686-CDE3AB505041}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devices", "..\Devices\Devices.csproj", "{D72D672A-70E0-4A05-9562-43C2185AD93B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Robotics.Numerics", "..\..\..\Common\Numerics\Microsoft.Robotics.Numerics\Microsoft.Robotics.Numerics.csproj", "{83551CC7-3D7A-4AF3-AC66-28B6F3446182}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReflectaClient", "..\..\..\RDK\Firmware\Teensy\ReflectaClient\ReflectaClient.csproj", "{42DD4897-B056-4CCF-9D0C-1B3037EAFB79}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Brief", "..\..\..\RDK\Microsoft.Robotics\Brief\Brief.fsproj", "{84910A19-C844-4103-A482-D67AF29412F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ILTranslationCSharp", "..\Samples\Apps\ILTranslationCSharp\ILTranslationCSharp.csproj", "{D31AA199-D346-416C-8703-197FACA13C86}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ILTranslationFSharp", "..\Samples\Apps\ILTranslationFSharp\ILTranslationFSharp.fsproj", "{8BAA32E7-CB42-470B-B1A6-175EFE415E7D}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccAuxPath0 = http://vstfpg03:8080/tfs/tfs_sbgvstf
+		SccAuxPath1 = http://vstfpg03:8080/tfs/tfs_sbgvstf
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccLocalPath0 = ..\\..\\..\\Common\\Numerics\\Microsoft.Robotics.Numerics
+		SccLocalPath1 = ..\\..\\..\\RDK\\Firmware\\Teensy\\ReflectaClient
+		SccNumberOfProjects = 2
+		SccProjectName0 = ../../../Common/Numerics/Microsoft.Robotics.Numerics
+		SccProjectName1 = ../../../RDK/Firmware/Teensy/ReflectaClient
+		SccProjectUniqueName0 = ..\\..\\..\\Common\\Numerics\\Microsoft.Robotics.Numerics\\Microsoft.Robotics.Numerics.csproj
+		SccProjectUniqueName1 = ..\\..\\..\\RDK\\Firmware\\Teensy\\ReflectaClient\\ReflectaClient.csproj
+		SccProvider0 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccProvider1 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vstfpg03:8080/tfs/tfs_sbgvstf
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{42DD4897-B056-4CCF-9D0C-1B3037EAFB79}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42DD4897-B056-4CCF-9D0C-1B3037EAFB79}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42DD4897-B056-4CCF-9D0C-1B3037EAFB79}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42DD4897-B056-4CCF-9D0C-1B3037EAFB79}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6350EFCA-B4C1-49C9-8686-CDE3AB505041}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6350EFCA-B4C1-49C9-8686-CDE3AB505041}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6350EFCA-B4C1-49C9-8686-CDE3AB505041}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6350EFCA-B4C1-49C9-8686-CDE3AB505041}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83551CC7-3D7A-4AF3-AC66-28B6F3446182}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83551CC7-3D7A-4AF3-AC66-28B6F3446182}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83551CC7-3D7A-4AF3-AC66-28B6F3446182}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83551CC7-3D7A-4AF3-AC66-28B6F3446182}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84910A19-C844-4103-A482-D67AF29412F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84910A19-C844-4103-A482-D67AF29412F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84910A19-C844-4103-A482-D67AF29412F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84910A19-C844-4103-A482-D67AF29412F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BAA32E7-CB42-470B-B1A6-175EFE415E7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BAA32E7-CB42-470B-B1A6-175EFE415E7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BAA32E7-CB42-470B-B1A6-175EFE415E7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BAA32E7-CB42-470B-B1A6-175EFE415E7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF795C66-F99F-489B-AAED-C942CF810338}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF795C66-F99F-489B-AAED-C942CF810338}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF795C66-F99F-489B-AAED-C942CF810338}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF795C66-F99F-489B-AAED-C942CF810338}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D31AA199-D346-416C-8703-197FACA13C86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D31AA199-D346-416C-8703-197FACA13C86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D31AA199-D346-416C-8703-197FACA13C86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D31AA199-D346-416C-8703-197FACA13C86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D72D672A-70E0-4A05-9562-43C2185AD93B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D72D672A-70E0-4A05-9562-43C2185AD93B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D72D672A-70E0-4A05-9562-43C2185AD93B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D72D672A-70E0-4A05-9562-43C2185AD93B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,13 @@
+\ demo of attaching interrupt words
+
+input 2 pinMode  \  interrupt 0 pin
+input 3 pinMode  \  interrupt 1 pin
+
+'9 'led def
+output led pinMode
+
+[high led digitalWrite] 'on  def
+[low  led digitalWrite] 'off def
+
+'on  0 change attachISR
+'off 1 change attachISR

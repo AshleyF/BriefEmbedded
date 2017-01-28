@@ -1,0 +1,39 @@
+\ demo driving Monster Moto controller board on Eddie
+
+[5 7 8] 'left def 
+[6 4 9] 'right def
+
+\ example: 123 left cw
+[swap digitalWrite] 'dw def
+[low  dw  high dw  analogWrite] 'cw def
+[high dw  low  dw  analogWrite] 'ccw def
+
+[high dw  high dw  0 analogWrite] 'brakevcc def
+[low  dw  low  dw  0 analogWrite] 'brakegnd def
+[left brakevcc  right brakevcc]   'stop def
+
+\ init output pins
+
+[output swap pinMode] 'out def
+left  out out out
+right out out out
+
+\ init braked
+
+left  low dw low dw drop
+right low dw low dw drop
+
+\ demo!
+
+255 left cw
+255 right ccw
+
+prompt
+
+255 left ccw
+255 right cw
+
+prompt
+
+left  brakegnd
+right brakegnd

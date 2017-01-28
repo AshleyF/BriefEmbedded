@@ -1,0 +1,53 @@
+[abs 1 max]                                                           'absSpeed        def  \  s-i
+[- abs]                                                               'absDist         def  \  ta-i
+[absDist 0 >]                                                         'needToMove?     def  \  ta-b
+[absSpeed <]                                                          'stillMoving?    def  \  cs-b
+[stillMoving? -rot needToMove? or]                                    'needToUpdate?   def  \  tacs-b
+[absDist swap absSpeed <=]                                            'reach1Step?     def  \  sta-b
+[absSpeed >=]                                                         'notTooFast?     def  \  cs-b
+[dup push notTooFast? pop swap push -rot reach1Step? pop and]         'canFinish?      def  \  tacs-b
+'canFinish? drop  \  reify
+[absDist swap absSpeed /]                                             'ticksToFinish   def  \  sta-i
+[absSpeed swap /]                                                     'ticksToDecel    def  \  cs-i
+[dup push ticksToDecel pop swap push -rot ticksToFinish pop <]        'needToSlowDown? def  \  tacs-b
+[push push - sign pop * pop +]                                        'speedUp         def  \  tacs-s
+[push push drop drop pop peek swap pop sign * -]                      'slowDown        def  \  **cs-s
+'speedUp drop  \  reify more
+[3 pick 3 pick 3 pick 3 pick]                                         '4dup            def  \  abcd-abcdabcd
+[4dup 2 pick push needToSlowDown? 'slowDown 'speedUp choice pop swap] 'changeSpeed     def  \  tacs-as
+[drop drop dup -rot -]                                                'finish          def  \  tacs-as
+[4dup canFinish? 'finish 'changeSpeed choice dup -rot + false]        'update          def  \  tacs-saf
+'update drop  \  reify more
+[push drop swap drop pop dup 0 <> dup push [drop 0] if swap pop]      'complete        def  \  tacs-saf
+[4dup needToUpdate? 'update 'complete choice]                         'go              def  \  tacs-saf
+
+
+'target var 1500 target !
+'actual var 1500 actual !
+'accel  var 1 accel !
+'speed  var 0 speed !
+
+[dup servoAttach servoWriteMicros]  'init   def  \  av-
+[target !]                          'move   def  \  t-
+[target @ actual @ accel @ speed @] 'state@ def  \  - tacs
+[actual ! speed !]                  'state! def  \  sa -
+[[123 240 event] if]                'signal def  \  f -
+
+[[state@ go signal dup 0 servoWriteMicros state!] 20 ontick] 'loop def
+
+1500 0 init 'loop setLoop
+
+
+[2000 move] 'c def
+[1500 move] 'b def
+[1000 move] 'a def
+
+prompt a
+prompt b
+prompt c
+prompt a
+prompt c
+prompt 10 accel !  a
+prompt c
+prompt 5000 accel !  a
+prompt c

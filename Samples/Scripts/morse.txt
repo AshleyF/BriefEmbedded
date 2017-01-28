@@ -1,0 +1,59 @@
+\ demo Morse code app
+\ not the most efficent encoding, but cute...
+
+'9 'led def
+'11 'buzzer def
+
+[high buzzer digitalWrite  high led digitalWrite] 'beep def
+[low  buzzer digitalWrite  low  led digitalWrite] 'stop def
+
+'rate variable
+
+100 'delay instruction
+[rate @ * delay] 'pause def
+[50 rate !] 'fast def
+[100 rate !] 'medium def
+[200 rate !] 'slow def
+
+
+[beep 1 pause stop 1 pause] '. def
+[beep 3 pause stop 1 pause] '- def
+
+[3 pause] 'char def
+[7 pause] 'word def
+
+[. -        char] 'a def
+[- . . .    char] 'b def
+[- . - .    char] 'c def
+[- . .      char] 'd def
+[.          char] 'e def
+[. . - .    char] 'f def
+[- -        char] 'g def
+[. . . .    char] 'h def
+[. .        char] 'i def
+[. - - -    char] 'j def
+[- . -      char] 'k def
+[. - . .    char] 'l def
+[- -        char] 'm def
+[- .        char] 'n def
+[- - -      char] 'o def
+[. - - .    char] 'p def
+[- - . -    char] 'q def
+[. - .      char] 'r def
+[. . .      char] 's def
+[-          char] 't def
+[. . -      char] 'u def
+[. . . -    char] 'v def
+[. - -      char] 'w def
+[- . . -    char] 'x def
+[- . - -    char] 'y def
+[- - . .    char] 'z def
+
+[s o s  word] 'sos def
+[h e l l o  word] 'hello def
+[t h i s  word  i s  word  a  word  t e s t  word] 'test def
+[r o b o t i c s  word  r o c k s word] 'robotics def
+
+output buzzer pinMode
+output led    pinMode
+medium

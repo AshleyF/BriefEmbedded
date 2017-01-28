@@ -1,0 +1,32 @@
+'c:\baker\private\src\prototypes\brief\samples\scripts\gyro.txt load
+
+output 9 pinMode
+[high 9 digitalWrite] 'on def
+[low 9 digitalWrite] 'off def
+
+[500 > 'on 'off choice] 'signal def
+
+[sample signal] 'test def
+
+'test setLoop
+
+prompt
+
+stopLoop
+
+[sample abs signal] 'test def
+
+'test setLoop
+
+
+
+
+
+
+
+
+
+
+
+
+
