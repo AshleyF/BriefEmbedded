@@ -23,16 +23,6 @@ namespace brief
 
     // Memory (dictionary)
 
-  void blink(int num)
-  {
-    for (int i = 0; i < num; i++) {
-	    ::digitalWrite(13, HIGH);
-	    ::delay(50);
-	    ::digitalWrite(13, LOW);
-	    ::delay(50);
-    }
-  }
-
     void error(uint8_t code); // forward decl
 
     uint8_t memory[MEM_SIZE]; // dictionary (and local/arg space for IL semantics)
@@ -263,12 +253,11 @@ namespace brief
     void eventFooter() // send packed event as a Reflecta frame
     {
 	byte len = eventBuffer - here;
-	Serial.write(len - 1);
+	Serial.write(len);
 	for (int16_t i = 0; i < len; i++)
 	{
-	    Serial.write(mem(here + i));
+	    Serial.write(mem(i));
 	}
-	Serial.flush();
     }
 
     void event(uint8_t id, int16_t val) // helper to send simple scaler events
@@ -1056,24 +1045,19 @@ namespace brief
     {
 	if (Serial.available())
 	{
-	    int8_t b = Serial.read();
-	    bool isExec = b & 0x80 == 0x80;
-	    int8_t len = b & 0x7f;
-	    for (; len > 0; len--)
+	    memset(here++, Serial.read());
+	    bool isEnd = here > 1 && mem(here - 2) == 0;
+	    if (isEnd)
 	    {
-		while(!Serial.available());
-		::delay(500);
-		memset(here++, Serial.read());
-	    }
-
-	    if (isExec)
-	    {
-		here = last;
-		exec(here);
-	    }
-	    else
-	    {
-		last = here = here - 1;
+		if (mem(here - 1) == 0)
+		{
+		    last = here = here - 1;
+		}
+		else
+		{
+		    here = last;
+		    exec(here);
+		}
 	    }
 	}
 	
