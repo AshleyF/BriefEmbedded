@@ -32,11 +32,47 @@ let squirt execute bytecode =
     | Some port ->
         if bytecode.Length > 127 then failwith "Too much bytecode in single packet"
         if !traceMode then trace ()
-        let header = (byte bytecode.Length ||| if execute then 0uy else 0x80uy)
+        let header = (byte bytecode.Length ||| if execute then 0x80uy else 0uy)
+        printfn "HEADER: %i" header
         port.Write(Array.create 1 header, 0, 1)
         port.Write(bytecode, 0, bytecode.Length)
         port.BaseStream.Flush()
     | None -> failwith "Not connected to MCU."
+
+let dotEventId = 0xF0uy
+let rec readEvents () =
+    match !serial with
+    | Some port ->
+        if port.IsOpen && port.BytesToRead > 0 then
+            let len = port.ReadByte()
+            let id = port.ReadByte() |> byte
+            let data = Array.create len 0uy
+            port.Read(data, 0, len) |> ignore
+            let toInt d =
+                match Array.length d with
+                | 0 -> 0s
+                | 1 -> d.[0] |> sbyte |> int16
+                | 2 -> (int16 d.[0] <<< 8) ||| int16 d.[1]
+                | _ -> failwith "Invalid event data."
+            match id with
+            | id when id = dotEventId -> data |> toInt |> printf "\b\b%i\n> "
+            | 0xFFuy -> printfn "Boot event"
+            | 0xFCuy ->
+                printfn "VM Error: %s"
+                    (match data with
+                    | [|0uy|] -> "Return stack underflow"
+                    | [|1uy|] -> "Return stack overflow"
+                    | [|2uy|] -> "Data stack underflow"
+                    | [|3uy|] -> "Data stack overflow"
+                    | [|4uy|] -> "Out of memory"
+                    | _ -> "Unknown")
+            | _ -> printfn "Event (%i): %A" id data
+    | None -> ()
+    Thread.Sleep(100)
+    readEvents ()
+
+let readThread = new Thread(readEvents, IsBackground = true)
+readThread.Start()
 
 (* Here we use the lexer/parser to process lines of Brief code. Most everything is handled by the
    compiler, but several words are intercepted here as "compile-time" words for the interactive:
@@ -151,36 +187,6 @@ let squirt execute bytecode =
     bytecode can be seen with tracing on. *)
 
 let rec rep line =
-    let dotEventId = 0xF0uy
-    let rec readEvents () =
-        match !serial with
-        | Some port ->
-            let len = port.ReadByte()
-            let id = port.ReadByte() |> byte
-            let data = Array.create len 0uy
-            port.Read(data, 0, len) |> ignore
-            let toInt d =
-                match Array.length d with
-                | 0 -> 0s
-                | 1 -> d.[0] |> sbyte |> int16
-                | 2 -> (int16 d.[0] <<< 8) ||| int16 d.[1]
-                | _ -> failwith "Invalid event data."
-            match id with
-            | id when id = dotEventId -> data |> toInt |> printf "\b\b%i\n> "
-            | 0xFFuy -> printfn "Boot event"
-            | 0xFCuy ->
-                printfn "VM Error: %s"
-                    (match id with
-                    | 0uy -> "Return stack underflow"
-                    | 1uy -> "Return stack overflow"
-                    | 2uy -> "Data stack underflow"
-                    | 3uy -> "Data stack overflow"
-                    | 4uy -> "Out of memory"
-                    | _ -> "Unknown")
-            | _ -> printfn "Event (%i): %A" id data
-            Thread.Sleep(100)
-            readEvents ()
-        | None -> ()
     let reset () = compiler.EagerCompile("(reset)") |> fst |> squirt true
     let p = line |> parse
     let rec rep' stack = function
@@ -194,7 +200,6 @@ let rec rep line =
                     port.DtrEnable <- true
                     serial := Some port
                     port.Open()
-                    (new Thread(readEvents, IsBackground = true)).Start()
                     reset ()
                     rep' stack' t
                 | _ -> failwith "Malformed connect syntax - usage: '7 connect"
@@ -250,8 +255,12 @@ let rec rep line =
                 printfn "Memory used: %i bytes" compiler.Address
                 rep' stack t
             | "go" ->
-                rep' stack [Quotation [Token "/dev/ttyACM0"]; Token "conn"]
-                // rep' stack [Quotation [Token "com4"]; Token "conn"; Quotation [Token @"c:\baker\private\src\prototypes\brief\samples\scripts\smoothservos.txt"]; Token "load"]
+                traceMode := true
+                printfn "Trace mode: %b" !traceMode
+                rep' stack [Quotation [Token "/dev/ttyACM4"]; Token "conn"]
+            | "exit" ->
+                readThread.Abort()
+                failwith "exit"
             | _ -> rep' ([Token tok] :: stack) t
         | node :: t -> rep' ([node] :: stack) t
         | [] -> List.rev stack
@@ -261,9 +270,13 @@ let rec rep line =
 
 let rec repl () =
     printf "\n> "
-    try Console.ReadLine() |> rep
-    with ex -> printfn "Error: %s" ex.Message
-    repl ()
+    try
+        Console.ReadLine() |> rep
+        repl ()
+    with ex ->
+        if ex.Message <> "exit" then
+            printfn "Error: %s" ex.Message
+            repl ()
 
 printfn "Welcome to Brief"
 repl ()

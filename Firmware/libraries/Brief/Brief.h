@@ -1,26 +1,26 @@
 /* Brief.h
 
-   Scriptable firmware for interfacing hardware with the Microsoft Robotics for Windows libraries
-   and for running real time control loops. */
+   Scriptable firmware for interfacing hardware with the .NET libraries and for
+   running real time control loops. */
 
 #define __STDC_LIMIT_MACROS
 #include <Arduino.h>
-//#include <Servo.h>
-//#include <Wire.h>
+#include <Servo.h>
+#include <Wire.h>
 
 #ifndef BRIEF_H
 #define BRIEF_H
 
-#define MEM_SIZE          512  // dictionary and local/args space
-#define DATA_STACK_SIZE   4    // evaluation stack elements (int32s)
-#define RETURN_STACK_SIZE 4    // return and locals stack elements (int32s)
+#define MEM_SIZE          512   // dictionary and local/args space
+#define DATA_STACK_SIZE   4     // evaluation stack elements (int32s)
+#define RETURN_STACK_SIZE 4     // return and locals stack elements (int32s)
 
-#define MAX_PRIMITIVES    128  // max number of primitive (7-bit) instructions
-#define MAX_INTERRUPTS    6    // max number of ISR words
-//#define MAX_SERVOS        48   // max number of servos
+#define MAX_PRIMITIVES    128   // max number of primitive (7-bit) instructions
+#define MAX_INTERRUPTS    6     // max number of ISR words
+#define MAX_SERVOS        48    // max number of servos
 
-#define BOOT_EVENT_ID     0xFF // event sent upon 'setup' (not reset)
-#define VM_EVENT_ID       0xFC // event sent upon VM error
+#define BOOT_EVENT_ID     0xFF  // event sent upon 'setup' (not reset)
+#define VM_EVENT_ID       0xFC  // event sent upon VM error
 
 #define VM_ERROR_RETURN_STACK_UNDERFLOW 0
 #define VM_ERROR_RETURN_STACK_OVERFLOW  1

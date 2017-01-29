@@ -536,7 +536,8 @@ namespace brief
 /*  Moving items between data and return stack. The return stack is commonly also used to store data
     that is local to a subroutine. It is safe to push data here to be recovered after a subroutine
     call. It is not safe to use it for passing data between subroutines. That is what the data stack
-    is for. Think of arguments vs. locals. */
+    is for. Think of arguments vs. locals. The normal way of handling locals in Brief that need to
+    survive a call and return from another word is to store them on the return stack. */
 
     void pushr()
     {
@@ -556,28 +557,7 @@ namespace brief
 /*  Dictionary manipulation instructions:
 
     The 'forget' function is a Forthism for reverting to the address of a previously defined word;
-    essentially forgetting it and any (potentially dependent words) defined thereafter.
-
-    The alloc, free, tail, and local* instructions are all to support IL translation. The CLR
-    doesn't use the evaluation stack for parameter passing and local storage. For example, there
-    are no stack manipulation instructions in IL except drop. Instead, IL code generally makes use
-    of a per-method locals and arguments fetched and stored via instructions such as
-    StLoc/LdLoc/StArg/LdArg.
-
-    This is not a feature used in idiomatic Brief code but is here to make IL translation more
-    straight forward. Each method allocated enough space for locals and args. Before returning (or
-    earlier for TCO), this is freed.
-
-    The normal way of handling locals in Brief that need to survive a call and return from another
-    word is to store them on the return stack. The alloc instruction does this to persist the size
-    of allocation to be used by free/tail later. Tail call optimization (that is, .tail in the IL)
-    is handled by the tail instruction. This frees and pushes back a zero so that freeing later upon
-    return has no further effect.
-
-    Local and arg space is allocated from the bottom of dictionary space. The 'local' instruction is
-    used for args as well despite the name. It simply pushes the address of the nth slot. This
-    address can then be used by the regular fetch and store instructions. Because 16-bit values are
-    commonly used in translated IL, there are single-byte instructions for this. */
+    essentially forgetting it and any (potentially dependent words) defined thereafter. */
 
     void forget() // revert dictionary pointer to TOS
     {
@@ -586,82 +566,12 @@ namespace brief
             here = i;
     }
 
-    void alloc()
-    {
-        int16_t len = pop();
-        locals -= len;
-        rpush(len); // remember for free later
-        for (int16_t i = locals; i < locals + len; i++)
-        {
-            memset(i, 0);
-        }
-        if (locals < here)
-        {
-            error(VM_ERROR_OUT_OF_MEMORY);
-        }
-    }
- 
-    void free()
-    {
-        locals += rpop();
-    }
-
-    void tail()
-    {
-        free(); // free early
-        rpush(0); // leave this for free later
-    }
-
-    void local()
-    {
-        push(locals + pop());
-    }
-
-    void localFetch16()
-    {
-        local();
-        fetch16();
-    }
-
-    void localStore16()
-    {
-        local();
-        store16();
-    }
-
-    /*  Control flow is done by instructions that manipulate the program counter (p).
-
-        A 'call' instruction pops an address and calls it; pushing the current p as to return.
-
-        Conditional and unconditional branching is done by relative offsets as a parameter to the
-        instruction (following byte). These (like literals) are among the few instructions with
-        operands; in this case to save code size by not requiring a preceeding literal.
-
-        Notice that there is only the single conditional branch instruction.  There are no 'branch
-        if greater', 'branch if equal', etc. Instead the separate comparison instructions above are
-        used as the preceding predicate. */
+    /*  A 'call' instruction pops an address and calls it; pushing the current p as to return. */
 
     void call()
     {
         rpush(p);
         p = pop();
-    }
-
-    void branch()
-    {
-        p += (int8_t)mem(p);
-    }
-
-    void zbranch()
-    {
-        if (pop() == 0)
-        {
-            branch();
-        }
-        else
-        {
-            p++;
-        }
     }
 
     /*  Quotations and 'choice' need some explanation. The idea behind quotations is something like
@@ -781,7 +691,6 @@ namespace brief
 
         Brief words (addresses/quotations) may be hooked to respond to Wire events. */
 
-    /*
     void wireBegin()
     {
         Wire.begin(); // join bus as master (slave not supported)
@@ -850,7 +759,6 @@ namespace brief
         onRequestWord = pop();
         Wire.onRequest(wireOnRequest);
     }
-    */
 
     /*  Brief word addresses (or quotations) may be set to run upon interrupts.  For more info on
         the argument values and behavior, see:
@@ -933,7 +841,6 @@ namespace brief
 
         We keep up to MAX_SERVOS (48) servo instances attached. */
 
-    /*
     Servo servos[MAX_SERVOS];
 
     void servoAttach()
@@ -951,7 +858,6 @@ namespace brief
     {
         servos[pop()].writeMicroseconds(pop());
     }
-    */
 
     // A couple of stragglers...
 
@@ -977,72 +883,64 @@ namespace brief
 	Serial.begin(baud);
         resetBoard();
 
-        bind(0,  ret); // assumed in frameReceived
+        bind(0,  ret);
         bind(1,  lit8);
         bind(2,  lit16);
-        bind(3,  branch); // used only by IL translation
-        bind(4,  zbranch); // used only by IL translation
-        bind(5,  quote);
-        bind(6,  eventHeader);
-        bind(7,  eventBody8);
-        bind(8,  eventBody16);
-        bind(9,  eventFooter);
-        bind(10, eventOp);
-        bind(11, fetch8);
-        bind(12, store8);
-        bind(13, fetch16);
-        bind(14, store16);
-        bind(15, add);
-        bind(16, sub);
-        bind(17, mul);
-        bind(18, div);
-        bind(19, mod);
-        bind(20, andb);
-        bind(21, orb);
-        bind(22, xorb);
-        bind(23, shift);
-        bind(24, eq);
-        bind(25, neq);
-        bind(26, gt);
-        bind(27, geq);
-        bind(28, lt);
-        bind(29, leq);
-        bind(30, notb);
-        bind(31, neg);
-        bind(32, inc);
-        bind(33, dec);
-        bind(34, drop);
-        bind(35, dup);
-        bind(36, swap);
-        bind(37, pick);
-        bind(38, roll);
-        bind(39, clr);
-        bind(40, pushr);
-        bind(41, popr);
-        bind(42, peekr);
-        bind(43, forget);
-        bind(44, alloc);
-        bind(45, free);
-        bind(46, tail);
-        bind(47, local);
-        bind(48, localFetch16);
-        bind(49, localStore16);
-        bind(50, call);
-        bind(51, choice);
-        bind(52, chooseIf);
-        bind(53, loopTicks);
-        bind(54, setLoop);
-        bind(55, stopLoop);
-        bind(56, resetBoard);
-        bind(57, pinMode);
-        bind(58, digitalRead);
-        bind(59, digitalWrite);
-        bind(60, analogRead);
-        bind(61, analogWrite);
-        bind(62, attachISR);
-        bind(63, detachISR);
-        bind(64, milliseconds);
-        bind(65, pulseIn);
+        bind(3,  quote);
+        bind(4,  eventHeader);
+        bind(5,  eventBody8);
+        bind(6,  eventBody16);
+        bind(7,  eventFooter);
+        bind(8,  eventOp);
+        bind(9,  fetch8);
+        bind(10, store8);
+        bind(11, fetch16);
+        bind(12, store16);
+        bind(13, add);
+        bind(14, sub);
+        bind(15, mul);
+        bind(16, div);
+        bind(17, mod);
+        bind(18, andb);
+        bind(19, orb);
+        bind(20, xorb);
+        bind(21, shift);
+        bind(22, eq);
+        bind(23, neq);
+        bind(24, gt);
+        bind(25, geq);
+        bind(26, lt);
+        bind(27, leq);
+        bind(28, notb);
+        bind(29, neg);
+        bind(30, inc);
+        bind(31, dec);
+        bind(32, drop);
+        bind(33, dup);
+        bind(34, swap);
+        bind(35, pick);
+        bind(36, roll);
+        bind(37, clr);
+        bind(38, pushr);
+        bind(39, popr);
+        bind(40, peekr);
+        bind(41, forget);
+        bind(42, call);
+        bind(43, choice);
+        bind(44, chooseIf);
+        bind(45, loopTicks);
+        bind(46, setLoop);
+        bind(47, stopLoop);
+        bind(48, resetBoard);
+        bind(49, pinMode);
+        bind(50, digitalRead);
+        bind(51, digitalWrite);
+        bind(52, analogRead);
+        bind(53, analogWrite);
+        bind(54, attachISR);
+        bind(55, detachISR);
+        bind(56, milliseconds);
+        bind(57, pulseIn);
 
         for (int16_t i = 0; i < MAX_INTERRUPTS; i++)
         {
@@ -1057,19 +955,20 @@ namespace brief
 	if (Serial.available())
 	{
 	    int8_t b = Serial.read();
-	    bool isExec = b & 0x80 == 0x80;
+	    bool isExec = (b & 0x80) == 0x80;
 	    int8_t len = b & 0x7f;
 	    for (; len > 0; len--)
 	    {
 		while(!Serial.available());
-		::delay(500);
 		memset(here++, Serial.read());
 	    }
 
 	    if (isExec)
 	    {
+		memset(here++, 0); // ensure return
 		here = last;
 		exec(here);
+		blink(20);
 	    }
 	    else
 	    {

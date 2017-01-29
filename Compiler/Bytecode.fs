@@ -7,17 +7,15 @@ open System
 
    Below are all of the base Brief instructions. Any user-defined functions will be (User byte).
    Notice that most of them have no operands; instead taking parameters from the stack. The
-   exceptions are literals, branches, and Quote. A Word is a 16-bit subroutine address. The User
+   exceptions are literals and Quote. A Word is a 16-bit subroutine address. The User
    type is for user-defined instructions.
 
    To understand the instruction set, refer to the VM implementation:
 
-       RDK\Firmware\Teensy\libraries\Brief\Brief.cpp/h *)
+       Firmware\libraries\Brief\Brief.cpp/h *)
 
 type Instruction =
     | Literal    of int16 // becomes lit8/16
-    | Branch     of sbyte
-    | ZeroBranch of sbyte
     | Quote      of byte
     | Return
     | EventHeader | EventBody8 | EventBody16 | EventFooter | Event
@@ -33,8 +31,6 @@ type Instruction =
     | Drop | Duplicate | Swap | Pick | Roll | Clear
     | Push | Pop | Peek
     | Forget
-    | Alloc | Free | Tail
-    | Local | LocalFetch16 | LocalStore16
     | Call
     | Choice | If
     | LoopTicks
@@ -108,11 +104,9 @@ let define dict brief word token code =
 
 let assembleBriefInstruction dict = function
     | Literal x ->
-        if x >= -128s && x <= 127s then [1uy; byte x] // Lit8 x
-        else [2uy; x >>> 8 |> byte; byte x] // Lit16 x
-    | Branch x     -> [3uy; byte x]
-    | ZeroBranch x -> [4uy; byte x]
-    | Quote x      -> [5uy; byte x]
+        if x >= -128s && x <= 127s then [1uy; byte x] // lit8 x
+        else [2uy; x >>> 8 |> byte; byte x] // lit16 x
+    | Quote x      -> [3uy; byte x]
     | Word (x, _)  -> [byte (x >>> 8) ||| 0x80uy; byte x]
     | NoOperation  -> []
     | User x       -> [x]
@@ -132,11 +126,10 @@ let disassembleBrief dict bytecode =
         let recurse t d = disassemble (d :: dis) t
         let unpackInt16 a b = (int16 a <<< 8 ||| int16 b)
         match b with
+        |  0uy :: x      :: t -> Return |> recurse t
         |  1uy :: x      :: t -> Literal (x |> sbyte |> int16) |> recurse t
         |  2uy :: a :: b :: t -> Literal (unpackInt16 a b)     |> recurse t
-        |  3uy :: x      :: t -> Branch (sbyte x |> int8)      |> recurse t
-        |  4uy :: x      :: t -> ZeroBranch (sbyte x)          |> recurse t
-        |  5uy :: x      :: t -> Quote (byte x)                |> recurse t
+        |  3uy :: x      :: t -> Quote (byte x)                |> recurse t
         | a :: b :: t when a &&& 0x80uy <> 0uy -> // call
             let addr = unpackInt16 (a &&& 0x7Fuy) b
             let word = codeToWord dict [|a; b|]
@@ -154,8 +147,6 @@ let disassembleBrief dict bytecode =
 let printBrief dict b = // Brief to 'words'
     let rec print = function
         | Literal x      -> sprintf "%i" x
-        | Branch x       -> sprintf "(branch%i)" x
-        | ZeroBranch x   -> sprintf "(0branch%i)" x
         | Quote x        -> sprintf "(quote%i)" x
         | Word (_, name) -> name
         | NoOperation    -> failwith "NoOperation should not exist in assembled code"
@@ -324,66 +315,60 @@ let initDictionary dict address pending =
     let defineBytecode (b, w, c) = define dict (Some b) w None (lazy [|byte c|])
     List.iter defineBytecode
         [Return,                "(return)",              0   //             -  (from return)
-         EventHeader,           "event{",                6   // id          -
-         EventBody8,            "cdata",                 7   // val         -
-         EventBody16,           "data",                  8   // val         -
-         EventFooter,           "}event",                9   //             -
-         Event,                 "event",                 10  // val id      -
-         Fetch8,                "c@",                    11  // addr        - val
-         Store8,                "c!",                    12  // val addr    -
-         Fetch16,               "@",                     13  // addr        - val
-         Store16,               "!",                     14  // val addr    -
-         Add,                   "+",                     15  // y x         - sum
-         Subtract,              "-",                     16  // y x         - diff
-         Multiply,              "*",                     17  // y x         - prod
-         Divide,                "/",                     18  // y x         - quot
-         Modulus,               "mod",                   19  // y x         - rem
-         And,                   "and",                   20  // y x         - result
-         Or,                    "or",                    21  // y x         - result
-         ExclusiveOr,           "xor",                   22  // y x         - result
-         Shift,                 "shift",                 23  // x bits      - result
-         Equal,                 "=",                     24  // y x         - pred
-         NotEqual,              "<>",                    25  // y x         - pred
-         Greater,               ">",                     26  // y x         - pred
-         GreaterOrEqual,        ">=",                    27  // y x         - pred
-         Less,                  "<",                     28  // y x         - pred
-         LessOrEqual,           "<=",                    29  // y x         - pred
-         Not,                   "not",                   30  // x           - result
-         Negate,                "neg",                   31  // x           - -x
-         Increment,             "1+",                    32  // x           - x+1
-         Decrement,             "1-",                    33  // x           - x-1
-         Drop,                  "drop",                  34  // x           -
-         Duplicate,             "dup",                   35  // x           - x x
-         Swap,                  "swap",                  36  // y x         - x y
-         Pick,                  "pick",                  37  // n           - val
-         Roll,                  "roll",                  38  // n           -
-         Clear,                 "clear",                 39  //             -
-         Push,                  "push",                  40  // x           -   (to return)
-         Pop,                   "pop",                   41  //             - x (from return)
-         Peek,                  "peek",                  42  //             - x (from return)
-         Forget,                "forget",                43  // addr        -
-         Alloc,                 "(alloc)",               44  // len         -  (to return)
-         Free,                  "(free)",                45  //             -  (from return)
-         Tail,                  "(tail)",                46  //             -  (from/to return)
-         Local,                 "(local)",               47  // index       - addr
-         LocalFetch16,          "(local@)",              48  // index       - val
-         LocalStore16,          "(local!)",              49  // val index   -
-         Call,                  "call",                  50  // addr        -
-         Choice,                "choice",                51  // q p         -
-         If,                    "if",                    52  // q           -
-         LoopTicks,             "loopTicks",             53  //             -
-         SetLoop,               "setLoop",               54  // addr        -
-         StopLoop,              "stopLoop",              55  //             -
-         Reset,                 "(reset)",               56  //             -
-         PinMode,               "pinMode",               57  // mode pin    -
-         DigitalRead,           "digitalRead",           58  // pin         - val
-         DigitalWrite,          "digitalWrite",          59  // val pin     -
-         AnalogRead,            "analogRead",            60  // pin         - val
-         AnalogWrite,           "analogWrite",           61  // val pin     -
-         AttachISR,             "attachISR",             62  // addr i mode -
-         DetachISR,             "detachISR",             63  // i           -
-         Milliseconds,          "milliseconds",          64  //             - millis
-         PulseIn,               "pulseIn",               65] // val pin     - duration
+         EventHeader,           "event{",                4   // id          -
+         EventBody8,            "cdata",                 5   // val         -
+         EventBody16,           "data",                  6   // val         -
+         EventFooter,           "}event",                7   //             -
+         Event,                 "event",                 8   // val id      -
+         Fetch8,                "c@",                    9   // addr        - val
+         Store8,                "c!",                    10  // val addr    -
+         Fetch16,               "@",                     11  // addr        - val
+         Store16,               "!",                     12  // val addr    -
+         Add,                   "+",                     13  // y x         - sum
+         Subtract,              "-",                     14  // y x         - diff
+         Multiply,              "*",                     15  // y x         - prod
+         Divide,                "/",                     16  // y x         - quot
+         Modulus,               "mod",                   17  // y x         - rem
+         And,                   "and",                   18  // y x         - result
+         Or,                    "or",                    19  // y x         - result
+         ExclusiveOr,           "xor",                   20  // y x         - result
+         Shift,                 "shift",                 21  // x bits      - result
+         Equal,                 "=",                     22  // y x         - pred
+         NotEqual,              "<>",                    23  // y x         - pred
+         Greater,               ">",                     24  // y x         - pred
+         GreaterOrEqual,        ">=",                    25  // y x         - pred
+         Less,                  "<",                     26  // y x         - pred
+         LessOrEqual,           "<=",                    27  // y x         - pred
+         Not,                   "not",                   28  // x           - result
+         Negate,                "neg",                   29  // x           - -x
+         Increment,             "1+",                    30  // x           - x+1
+         Decrement,             "1-",                    31  // x           - x-1
+         Drop,                  "drop",                  32  // x           -
+         Duplicate,             "dup",                   33  // x           - x x
+         Swap,                  "swap",                  34  // y x         - x y
+         Pick,                  "pick",                  35  // n           - val
+         Roll,                  "roll",                  36  // n           -
+         Clear,                 "clear",                 37  //             -
+         Push,                  "push",                  38  // x           -   (to return)
+         Pop,                   "pop",                   39  //             - x (from return)
+         Peek,                  "peek",                  40  //             - x (from return)
+         Forget,                "forget",                41  // addr        -
+         Call,                  "call",                  42  // addr        -
+         Choice,                "choice",                43  // q p         -
+         If,                    "if",                    44  // q           -
+         LoopTicks,             "loopTicks",             45  //             -
+         SetLoop,               "setLoop",               46  // addr        -
+         StopLoop,              "stopLoop",              47  //             -
+         Reset,                 "(reset)",               48  //             -
+         PinMode,               "pinMode",               49  // mode pin    -
+         DigitalRead,           "digitalRead",           50  // pin         - val
+         DigitalWrite,          "digitalWrite",          51  // val pin     -
+         AnalogRead,            "analogRead",            52  // pin         - val
+         AnalogWrite,           "analogWrite",           53  // val pin     -
+         AttachISR,             "attachISR",             54  // addr i mode -
+         DetachISR,             "detachISR",             55  // i           -
+         Milliseconds,          "milliseconds",          56  //             - millis
+         PulseIn,               "pulseIn",               57] // val pin     - duration
 
     let library (w, d) = lazyCompile dict d address pending |> define dict None w None
     List.iter library
