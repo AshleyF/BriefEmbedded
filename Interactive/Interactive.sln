@@ -5,8 +5,6 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Interactive", "Interactive.
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Brief", "..\Compiler\Brief.fsproj", "{84910A19-C844-4103-A482-D67AF29412F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReflectaClient", "..\ReflectaClient\ReflectaClient.csproj", "{42DD4897-B056-4CCF-9D0C-1B3037EAFB79}"
-EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
 		SccNumberOfProjects = 1

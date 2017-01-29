@@ -51,10 +51,6 @@
       <Name>Brief</Name>
       <Project>{84910A19-C844-4103-A482-D67AF29412F2}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\ReflectaClient\ReflectaClient.csproj">
-      <Project>{42DD4897-B056-4CCF-9D0C-1B3037EAFB79}</Project>
-      <Name>ReflectaClient</Name>
-    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
