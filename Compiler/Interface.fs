@@ -1,15 +1,13 @@
 ﻿namespace Microsoft.Robotics.Brief
 
-open IL
-open Bytecode
 open System
+open Bytecode
 
-(* Below is a class meant to be owned by an IMicrocontroller instance in C#-land. As such we give a
-   little object wrapper with overloaded methods hiding the option types and such. It holds onto an
-   instance the dictionary, the current address and the sequence of pending bytecode to be sent down
-   to the MCU. This makes many of the methods simply curried versions of existing functions with
-   these captured. In fact, isn't it interesting to think of objects as really a set of partially-
-   applied functions? :)
+(* Below is a class meant to be used in C#-land. As such we give a little object wrapper with
+   overloaded methods hiding the option types and such. It holds onto an instance the dictionary,
+   the current address and the sequence of pending bytecode to be sent down to the MCU. This
+   makes many of the methods simply curried versions of existing functions with these captured.
+   In fact, it's interesting to think of objects as really a set of partially-applied functions? :)
 
    Each of the Eager* methods return a pair of byte arrays (byte[] * byte[] tuple) representing
    the dependent definitions needing to be sent down and the bytecode for the compiled/translated
@@ -20,10 +18,7 @@ open System
 
    The Define methods have the side effect of adding lazy definitions to the dictionary. These may
    later be reified implicitly and returned as definitions to send down when depending code is
-   reified.
-
-   Again, Compiler instances are expected to be owned ("has a") by an IMicrocontroller, exposing
-   "easier" interfaces to these "simple" internals. *)
+   reified. *)
 
 open System.Reflection
 
@@ -43,11 +38,9 @@ type Compiler() =
     member x.Reset() = dict := []; address := 0; pending := Seq.empty; initDictionary dict address pending
 
     member x.EagerCompile(source) = eagerCompile   dict source, getPending ()
-    member x.EagerTranslate(meth) = eagerTranslate dict meth,   getPending ()
     member x.EagerAssemble(ast)   = eagerAssemble  dict ast,    getPending ()
 
     member x.LazyCompile(source) = lazyCompile   dict source address pending
-    member x.LazyTranslate(meth) = lazyTranslate dict meth   address pending
     member x.LazyAssemble(ast)   = lazyAssemble  dict ast    address pending
 
     member x.Reify(lazycode : Lazy<byte array>) = lazycode.Force(), getPending ()

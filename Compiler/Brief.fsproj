@@ -42,7 +42,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bytecode.fs" />
-    <Compile Include="IL.fs" />
     <Compile Include="Interface.fs" />
   </ItemGroup>
   <PropertyGroup>

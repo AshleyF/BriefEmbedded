@@ -7,8 +7,8 @@ open System
 
    Below are all of the base Brief instructions. Any user-defined functions will be (User byte).
    Notice that most of them have no operands; instead taking parameters from the stack. The
-   exceptions are literals, branches (used only for IL translation), and Quote. A Word is a 16-bit
-   subroutine address. The User type is for user-defined instructions.
+   exceptions are literals, branches, and Quote. A Word is a 16-bit subroutine address. The User
+   type is for user-defined instructions.
 
    To understand the instruction set, refer to the VM implementation:
 
@@ -50,13 +50,12 @@ type Instruction =
     | User of byte // user defined instruction
     | NoOperation
 
-(* We maintain mappings from Word names, optionally IL metadata Tokens and optionally Brief
-   instructions to bytecode. Definitions exist host-side (PC) initially. This is why Code is a
-   Lazy<byte array>. Only upon first use are they reified. We want to allow libraries of host-side
-   definitions with a "pay as you go" model. At that point, long definitions are sent down to the
-   MCU and the reified form becomes a two-byte call. The address of the call is specific to the MCU.
-   Another reason for MCU-specificity is that bytecode values may change depending on the order in
-   which they're bound by Reflecta (run-time querry interface is required).
+(* We maintain mappings from Word names, and optionally Brief instructions to bytecode. Definitions
+   exist host-side (PC) initially. This is why Code is a Lazy<byte array>. Only upon first use are
+   they reified. We want to allow libraries of host-side definitions with a "pay as you go" model.
+   At that point, long definitions are sent down to the MCU and the reified form becomes a two-byte
+   call. The address of the call is specific to the MCU. Another reason for MCU-specificity is that
+   bytecode values may change depending on the order in which they're bound.
 
    A "dictionary" is a simple Definition list. Various helper functions are provided to search the
    dictionary and to add new definitions. Defintions may shadow existing ones (last one
@@ -71,19 +70,8 @@ type Instruction =
 
    If a definition is a longer sequence then it is sent down to the MCU as a definition and lookup
    returns a 2-byte call instead of the sequence. This call address is specific to the MCU on which
-   it's defined, so lookup takes a dictionary instance owned by a particular MCU.
-
-   The translator makes use of this to resolve method calls (metadata tokens) in the IL. Any method
-   being called must have previously been defined at the PC (though not necessarily at the MCU). The
-   Brief compiler also uses this mechanism to resolve word definitions.
-
-   Notice that the name (string), token (int), and bytecode are provided independenty at this point.
-   This means that you can define a word in Brief source and tie it to a method without the bytecode
-   having come from translation of the method. Sometimes this is very useful given that compiled
-   Brief can easily be half the code and twice the performance of translated IL! Also, you can
-   provide a word name tied to translated IL and then call this from compiled Brief. There are
-   helpers that assume name and token come from the same method or Brief word, but at this lower
-   level there is no such assumption. *)
+   it's defined, so lookup takes a dictionary instance owned by a particular MCU. The Brief compiler
+   uses this mechanism to resolve word definitions. *)
 
 type Definition = {
     Brief : Instruction option    // Brief instruction (optional)
@@ -110,9 +98,13 @@ let define dict brief word token code =
 (* Below is the Brief assembler. Here we convert Brief instruction sequences to bytecode. It's a
    pretty straightforward process. Notice that Literals become either two or three bytes depending
    on the value. Future optimizations may include specific single-byte instructions for certain
-   values. For example, in IL there are such codes for -1 thru 8. Words become two-byte calls with
-   the high bit set. There is a Call instruction but this is for taking an address from the stack.
-   Instead, this high-bit-scheme makes for very efficiently packed subroutine threaded code. *)
+   values. Words become two-byte calls with the high bit set. There is a Call instruction but this
+   is for taking an address from the stack. Instead, this high-bit-scheme makes for very efficiently
+   packed subroutine threaded code.
+
+   In idiomatic Brief code, there are no branches. Instead we make use of quotations (the Quote
+   instruction) and Choice and If for conditionals. This mechanism, along with subroutine calls,
+   is all that is needed for a fully expressive language. *)
 
 let assembleBriefInstruction dict = function
     | Literal x ->
@@ -130,39 +122,6 @@ let assembleBriefInstruction dict = function
         | None -> failwith "Unrecognized Brief bytecode"
 
 let assembleBrief dict = List.map (assembleBriefInstruction dict) >> List.concat
-
-(* In idiomatic Brief code, there are no branches. Instead we make use of quotations (the Quote
-   instruction) and Choice and If for conditionals. This mechanism, along with subroutine calls,
-   is all that is needed for a fully expressive language.
-
-   However, Brief does support arbitrary relative branches as well. This is used by the IL
-   translator (and could be used by some future Brief compiler as an optimization in some cases).
-
-   One complication with IL translation is patching the relative branches. We handle this (in a
-   pure functional way, BTW) in two passes. The first pass produces a list of Brief instructions
-   along with the original IL instruction offsets - as a list of int * Instruction tuples. In this
-   first pass, Brief Branch and ZeroBranch instructions are produced with an offset matching the
-   original offset from the IL. This is likely wrong of course! There is occasionally but not always
-   a one-to-one correspondence between IL and Brief bytecode. The second pass patches these offsets
-   by mapping the IL offset to the corresponding Brief offset in the generated code. This means
-   finding the first bit of Brief code with an original IL address >= the absolute target. *)
-
-let assembleBriefWithBranchPatching dict b =
-    let bytes = b |> List.map (fun (i, b) -> i, assembleBriefInstruction dict b)
-    let patch addr offset =
-        let find n = // find Brief address corresponding to IL address
-            Seq.takeWhile (fst >> (>=) n) bytes
-            |> Seq.map snd
-            |> List.concat |> List.length
-        let here = find addr
-        let offset' = offset |> sbyte |> int32
-        let target = addr + offset' + 1 |> find
-        target - here + 1 |> byte
-    let patchBranches = function
-        | a, [3uy; x] -> a, [3uy; patch a x] // Branch
-        | a, [4uy; x] -> a, [4uy; patch a x] // ZeroBranch
-        | a, x -> a, x
-    bytes |> List.map patchBranches |> List.map snd |> List.concat |> Array.ofList
 
 (* For debugging and diagnostics, it is often useful to convert raw bytecode back to a list of
    Brief instructions. For subroutine calls, we even look up the name in the dictionary. We also
@@ -259,7 +218,7 @@ let lex source =
    parsed as a child Node list. Tokens which can be parsed as an Int16 become Numbers. Special
    syntax is allowed for literal subroutine call addresses in the form "(123)".
 
-   Please note that there is no guarantee that output from the pretty-printer can be "round tripped"
+   Note that there is no guarantee that output from the pretty-printer can be "round tripped"
    through the lexer/parser. *)
 
 type Node =
@@ -339,14 +298,14 @@ let shrink dict addr (code : byte array) =
     else [|addr >>> 8 |> byte ||| 0x80uy; byte addr|], addr + len + 1, Array.append code ret
 
 (* We can't eagerly reify definitions because they may depend on other definitions that have yet to
-   be shrunken (which implies sending down to the MCU). We could easily cause a cascading effect in
-   which many definitions suddenly need to be reified in order to know their addresses to embed as
+   be shrunken (which implies sending them down to the MCU). We could easily cause a cascading effect
+   in which many definitions suddenly need to be reified in order to know their addresses to embed as
    calls.
 
-   To avoid this, as we've talked about in the section covering the dictionary mechanics above, we
-   store bytecode in the dictionary as a Lazy<byte array>. Forcing these lazy values causes
-   compilation, assembly or IL translation at that moment. We call the compiler/assembler/translator
-   function a 'generator', a unit -> byte array function. *)
+   To avoid this, as we've talked about in the dictionary mechanics above, we store bytecode in the
+   dictionary as a Lazy<byte array>. Forcing these lazy values causes compilation, assembly at that
+   moment. We call the compiler/assembler/translator function a 'generator', a unit -> byte array
+   function. *)
 
 let lazyGenerate dict generator address pending = lazy (
     let code, addr, def = generator () |> shrink dict !address
@@ -359,11 +318,7 @@ let lazyCompile dict source = lazyGenerate dict (fun () -> eagerCompile dict sou
 let lazyAssemble dict ast = lazyGenerate dict (fun () -> eagerAssemble dict ast)
 
 (* Below is a function to initialize a dictionary with mappings for all of the Brief primitives
-   as well as a library of useful words which can be thought of as being part of the language.
-
-   This dictionary is expected to be "owned" by an IMicrocontroller instance (a "has a"
-   relationship). A ref to a Definition list (dict) and the current free address is given and
-   will be updated as definitions are reified. *)
+   as well as a library of useful words which can be thought of as being part of the language. *)
 
 let initDictionary dict address pending =
     let defineBytecode (b, w, c) = define dict (Some b) w None (lazy [|byte c|])
@@ -465,7 +420,6 @@ let initDictionary dict address pending =
          "ellapsed"     , "ms lastms @ - abs"
          "resetEllapsed", "ms lastms !"
          "ontick"       , "ellapsed <= [resetEllapsed call] 'drop choice" // e.g. [foo bar] 10 ontick
-         (*
          "dip"          , "swap push call pop" // abq-xb
          "when"         , "[[] choice]"
          "unless"       , "[[] swap choice]"
@@ -506,6 +460,4 @@ let initDictionary dict address pending =
          "tri@"         , "[dup 3dip dup 2dip apply]"
          "2tri@"        , "[dup 4dip apply]"
          "both?"        , "[bi@ and]"
-         "either?"      , "[bi@ or]"
-         *)
-         ]
+         "either?"      , "[bi@ or]" ]
