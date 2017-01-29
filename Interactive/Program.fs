@@ -12,14 +12,14 @@
 open System
 open System.IO
 open System.IO.Ports
+open System.Threading
 open Bytecode
 open Microsoft.Robotics.Brief
-open Microsoft.Robotics.Tests.Reflecta // TODO: Tests namespace?
 
 let traceMode = ref false // whether to spew trace info (bytecode, disassembly, etc.)
 let compiler = new Compiler()
 
-let (reflecta : ReflectaClient option ref) = ref None
+let (serial : SerialPort option ref) = ref None
 
 let squirt execute bytecode =
     let trace () =
@@ -28,10 +28,14 @@ let squirt execute bytecode =
             (compiler.Disassemble(bytecode))
             bytecode.Length
             (new String(bytecode |> Array.map (sprintf "%02x ") |> Seq.concat |> Array.ofSeq))
-    match !reflecta with
-    | Some client ->
+    match !serial with
+    | Some port ->
+        if bytecode.Length > 127 then failwith "Too much bytecode in single packet"
         if !traceMode then trace ()
-        client.SendFrame(Array.append bytecode [|(if execute then 0uy else 1uy)|])
+        let header = (byte bytecode.Length ||| if execute then 0uy else 0x80uy)
+        port.Write(Array.create 1 header, 0, 1)
+        port.Write(bytecode, 0, bytecode.Length)
+        port.BaseStream.Flush()
     | None -> failwith "Not connected to MCU."
 
 (* Here we use the lexer/parser to process lines of Brief code. Most everything is handled by the
@@ -148,6 +152,36 @@ let squirt execute bytecode =
 
 let rec rep line =
     let dotEventId = 0xF0uy
+    let rec readEvents () =
+        match !serial with
+        | Some port ->
+            let len = port.ReadByte()
+            let id = port.ReadByte() |> byte
+            let data = Array.create len 0uy
+            port.Read(data, 0, len) |> ignore
+            let toInt d =
+                match Array.length d with
+                | 0 -> 0s
+                | 1 -> d.[0] |> sbyte |> int16
+                | 2 -> (int16 d.[0] <<< 8) ||| int16 d.[1]
+                | _ -> failwith "Invalid event data."
+            match id with
+            | id when id = dotEventId -> data |> toInt |> printf "\b\b%i\n> "
+            | 0xFFuy -> printfn "Boot event"
+            | 0xFCuy ->
+                printfn "VM Error: %s"
+                    (match id with
+                    | 0uy -> "Return stack underflow"
+                    | 1uy -> "Return stack overflow"
+                    | 2uy -> "Data stack underflow"
+                    | 3uy -> "Data stack overflow"
+                    | 4uy -> "Out of memory"
+                    | _ -> "Unknown")
+            | _ -> printfn "Event (%i): %A" id data
+            Thread.Sleep(100)
+            readEvents ()
+        | None -> ()
+    let reset () = compiler.EagerCompile("(reset)") |> fst |> squirt true
     let p = line |> parse
     let rec rep' stack = function
         | Token tok :: t ->
@@ -155,43 +189,24 @@ let rec rep line =
             | "connect" | "conn" ->
                 match stack with
                 | [Quotation [Token com]] :: stack' ->
-                    let client = new ReflectaClient(com)
-                    reflecta := Some client
-                    squirt true [|56uy|] // reset
-                    client.ErrorReceived.Add(fun e -> printfn "Error: %s" e.Message)
-                    client.FrameReceived.Add(fun e ->
-                        let id = e.Frame.[0]
-                        let data = e.Frame.[1..]
-                        let toInt d =
-                            match Array.length d with
-                            | 0 -> 0s
-                            | 1 -> d.[0] |> sbyte |> int16
-                            | 2 -> (int16 d.[0] <<< 8) ||| int16 d.[1]
-                            | _ -> failwith "Invalid event data."
-                        match id with
-                        | id when id = dotEventId -> data |> toInt |> printf "\b\b%i\n> "
-                        | 0xFFuy -> printfn "Boot event"
-                        | 0xFCuy ->
-                            printfn "VM Error: %s"
-                                (match data.[0] with
-                                | 0uy -> "Return stack underflow"
-                                | 1uy -> "Return stack overflow"
-                                | 2uy -> "Data stack underflow"
-                                | 3uy -> "Data stack overflow"
-                                | 4uy -> "Out of memory"
-                                | _ -> "Unknown")
-                        | _ -> printfn "Event (%i): %A" e.Frame.[0] e.Frame.[1..])
+                    printfn "Connecting to %s" com // TODO
+                    let port = new SerialPort(com, 19200)
+                    port.DtrEnable <- true
+                    serial := Some port
+                    port.Open()
+                    (new Thread(readEvents, IsBackground = true)).Start()
+                    reset ()
                     rep' stack' t
                 | _ -> failwith "Malformed connect syntax - usage: '7 connect"
             | "disconnect" ->
-                match !reflecta with
-                | Some client ->
-                    client.Dispose()
-                    reflecta := None
+                match !serial with
+                | Some port ->
+                    port.Close()
+                    serial := None
                 | None -> failwith "Not connected"
                 rep' stack t
             | "reset" ->
-                compiler.EagerCompile("(reset)") |> fst |> squirt true
+                reset ()
                 compiler.Reset()
                 rep' stack t
             | "define" | "def" ->
@@ -235,13 +250,14 @@ let rec rep line =
                 printfn "Memory used: %i bytes" compiler.Address
                 rep' stack t
             | "go" ->
-                rep' stack [Quotation [Token "com4"]; Token "conn"; Quotation [Token @"c:\baker\private\src\prototypes\brief\samples\scripts\smoothservos.txt"]; Token "load"]
+                rep' stack [Quotation [Token "/dev/ttyACM0"]; Token "conn"]
+                // rep' stack [Quotation [Token "com4"]; Token "conn"; Quotation [Token @"c:\baker\private\src\prototypes\brief\samples\scripts\smoothservos.txt"]; Token "load"]
             | _ -> rep' ([Token tok] :: stack) t
         | node :: t -> rep' ([node] :: stack) t
         | [] -> List.rev stack
     let exe, def = compiler.EagerAssemble(rep' [] p |> List.concat)
     if def.Length > 0 then squirt false def
-    if exe.Length > 0 then squirt true  exe
+    if exe.Length > 0 then squirt true  (Array.concat [exe; [|0uy|]])
 
 let rec repl () =
     printf "\n> "

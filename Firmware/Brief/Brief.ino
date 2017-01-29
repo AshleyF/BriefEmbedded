@@ -1,7 +1,4 @@
 #include <Arduino.h>
-#include <Servo.h>
-#include <Wire.h>
-#include <Reflecta.h>
 #include <Brief.h>
 
 // This is an example of how to extend the VM.
@@ -14,23 +11,17 @@ void delayMillis()
 
 void setup()
 {
-    brief::setup();
-    reflectaFrames::setup(19200);
+    brief::setup(19200);
 
     // Bind extended function to a custom instruction (100)
-    // In the interactive: 100 'delay instruction
-    // In C#: mcu.Instruction("delay", 100)
+    // In the interactive: 100 'delay instruction1
+    // In .NET: compiler.Instruction("delay", 100)
     brief::bind(100, delayMillis);
+    pinMode(13, OUTPUT);
+    digitalWrite(13, LOW);
 }
 
 void loop()
 {
     brief::loop();
-    reflectaFrames::loop();
-    
- pinMode(13, OUTPUT);
- digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
- delay(500);               // wait for a second
- digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
- delay(500);
 }
