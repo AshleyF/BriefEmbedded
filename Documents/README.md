@@ -311,6 +311,7 @@ In a register machine each operator comes packed with operands. An add instructi
 
 Brief instructions are single bytes with the high bit reset:
 
+| 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 0 | x | x | x | x | x | x | x |
 
@@ -320,6 +321,7 @@ The lower seven bits become essentially an index into a function table. Each may
 
 You will see that it is extremely common to factor out redundant sequences of code into subroutines. There is no “call” instruction. Instead, if the high bit is set then the following byte is taken and together (in little endian), with the high bit reset, they become an address to be called.
 
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x |
 
