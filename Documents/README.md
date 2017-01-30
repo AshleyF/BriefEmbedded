@@ -1,11 +1,13 @@
 A Brief Introduction
 ====
 
-* Abstract 
+# Abstract 
 
 Brief is a scriptable firmware and protocol for interfacing hardware with .NET libraries and for running real time control loops.
 
-* Introduction
+![Teensy](./Media/Teensy.jpg)
+
+# Introduction
 
 Brief is so easy to use that you may be entirely unaware of it. Perhaps the robotics hardware you’ve chosen for your project is using the Brief firmware and is exposed as a USB device under Windows with interfacing libraries already available. In this case you’ve already been working at a much higher level without a care in the world about microcontrollers and hardware interfacing. This is the intended beauty of the system. The introduction here is for those of you who, out of curiosity or need, want to dive in and learn the inner workings. We think you’ll find it very interesting and uniquely simple and powerful.
 
@@ -21,15 +23,15 @@ You will find that there is absolutely nothing off-limits in the Brief system. I
 
 Brief is not a tool chain for programming standalone MCUs that are not connected to a PC. It is potentially possible to load byte code from flash or EEPROM rather than pushing down from a PC but this is not the intent.
 
-** Demo
+## Demo
 
 Brief targets AVR and ARM MCUs with at least 16Kb of flash and 1Kb of SRAM. Here we’ll use the Teensy with an ATmega32U4; a nice chip with 32Kb flash, 2.5Kb SRAM and built-in USB.
 
-*** Setup
+### Setup
 
 If you’re lucky, your MCU is already running the Brief firmware. Simply connect it to the PC and note the COM port on which it’s communicating. Otherwise, you will need to flash it.
 
-**** Flashing Firmware
+#### Flashing Firmware
 
 We’re using the loader provided by PJRC:
 
@@ -37,7 +39,7 @@ We’re using the loader provided by PJRC:
 
 You may also open the Brief.ino in the Arduino IDE (with TeensyDuino if you’re using that board) and Upload from there.
 
-**** Setup
+#### Setup
 
 If you plan to modify the firmware (see Custom Instructions below) then you will need to setup your environment:
 
@@ -45,7 +47,7 @@ If you plan to modify the firmware (see Custom Instructions below) then you will
 2. Install TeensyDuino
 3. Install Brief and Reflecta libraries (copy to \libraries\)
 
-*** Interactive Console
+### Interactive Console
 
 Once the firmware has been flashed, launch Brief.exe. This is an interactive console giving you full control of the MCU. It can be used to experiment with and to even program it.
 
@@ -96,7 +98,7 @@ Rather than sending values back to the host PC, you may also use them directly o
 
 We are starting to get into some complicated looking syntax (we’ll improve it below), but I’m sure you get the gist. Sequences of words within s	quare brackets are quotations and can be thought of as anonymous lambdas pushed onto the stack. The choice word is a combinatory that takes two quotations and executes one or the other of them depending on whether pin 21 was less than 40. We’re sampling pin 21 and, depending on whether it reads below 40, setting pin 0 high/low to turn on/off the LED.  This sequence can be added to the main loop and run completely independently of the PC.
  
-* Overview
+# Overview
 
 Before diving into a very detailed bottom-up discussion (see Underview below), let’s look at a top-down overview. Here we will purposely introduce concepts without full explanation so as to cover a lot of ground quickly. This will give you a good feel for the system as a whole and will show you where we’re headed as we methodically build up from primitives later.
 
@@ -104,7 +106,7 @@ As we’ve seen, Brief is stack VM used to facilitate a programmable protocol be
 
 As seen in the demo, Brief is also a Forth-like language. Unless you’ve programmed in Forth before, I’m sure the syntax looks completely foreign and somehow inverted. The truly surprising thing is that there is actually virtually no syntax at all. This is practically a direct representation of the semantics of the Brief VM. This language is used by library authors as an embedded DSL. The interactive console can also be invaluable to application writers when experimenting with new hardware.
 
-** Stack Machines in General
+## Stack Machines in General
 
 There are some very beautiful stack machines in hardware. Since the mid-80s though, register machines have clearly dominated and stack machines have receded into virtual machines such as the JVM and the CLR.
 
@@ -124,7 +126,7 @@ A benefit of RPN is the fact that you don’t have operator precedence or any ne
 
 There are commands for manipulating the stack to prepare arguments (dropping, duplicating, swapping, …), but they are used sparingly.
 
-** Execution Model
+## Execution Model
 
 The incantations we entered are being broken into whitespace separated words. Words may be signed integer literals such as 0, -7, 21, 123, 40, ... They may represent constants such as input, output, high, low, … They may be Brief commands such as pinMode, digitalWrite, analogRead, event. Very rarely do they indicate syntactic structure.
 
@@ -132,7 +134,7 @@ Words are executed from left to right. Some are nouns. Literals and constants ar
 
 This is how it goes; each word taking and/or leaving values on the stack. The concatenation of these words makes a useful expression.
 
-** Defining New Words
+## Defining New Words
 
 You may extend the built-in words with your own; defining new ones in terms of existing primitives or secondary words you’ve previously defined:
 
@@ -177,7 +179,7 @@ Getting even more tricky we may notice that the value for high and low is the sa
 
 	sensor dark? green digitalWrite
 
-** Defining a Vocabulary
+## Defining a Vocabulary
 
 The style of programming in Forth is to treat it as a programmable programming language. Words layered on words, layered on words; raising the vocabulary up to your problem domain so that you can talk about it in its own terms. This is more of a language oriented approach in which the whole language bends toward your application domain rather than the traditional object oriented approach in which only the type system bends. This idea becomes clear later when we get into authoring defining words; words that define words – much like Lisp-style macros.
 
@@ -213,13 +215,13 @@ Now we can say phrases like:
 
 The words work together to form essentially a little language for controlling the motors.
 
-** Extending the Protocol
+## Extending the Protocol
 
 Not only can definitions be thought of as extending the language, but they can be thought of as extending the protocol between the PC and MCU.
 
 These don’t just save typing. They save bytes over the wire. These definitions are being compiled and persisted in a dictionary on the MCU. They’re sent down once and then invoking them becomes a single instruction over the wire thereafter.
 
-** Extending the Control Loop
+## Extending the Control Loop
 
 If we define our nightlight sequence as a new word:
 
@@ -239,7 +241,7 @@ Have fun with it!
  
 Notice that we’re using a delay word to do a blocking pause. This isn’t a Brief primitive. It is a custom instruction added below in the Custom Instructions section.
 
-** Triggered Events
+## Triggered Events
 
 We can use this same mechanism to set up conditional events. Instead of the PC polling sensor values and reacting under certain conditions we can describe the conditions in Brief and have the MCU do the filtering and signal the PC.
 
@@ -248,7 +250,7 @@ We can use this same mechanism to set up conditional events. Instead of the PC p
 
 In this way the sensor polling can happen at a hundreds of KHz frequency until it needs to report to the PC over USB.
 
-** Custom Heartbeat
+## Custom Heartbeat
 
 We can use a loop word to provide an unsolicited stream of sensor data.
 
@@ -268,7 +270,7 @@ By the way, the multi-line formatting is just for readability. Any whitespace be
 
 A packed heartbeat can reasonably be expected to achieve frequencies approaching 1KHz if needed.
 
-** Attaching Interrupts
+## Attaching Interrupts
 
 You can attach Brief words as interrupt routines with attachInterrupt which, like setLoop, expects the address of a word to attach.
 
@@ -281,15 +283,15 @@ To detach just say `0 detachInterrupt`.
 
 Other triggers include low, rising or falling pin values, timers, etc.
 
-* Underview
+# Underview
 
 So far we have been exploring Brief in a sparse top-down fashion. Now that you have the gist of the system and where we’re headed, here is a thorough bottom-up discovery of Brief.
 
-** Brief VM
+## Brief VM
 
 The Brief VM is a stack machine executing single-byte instructions. There are some very beautiful stack machines in hardware, but since the mid-80s register machines have clearly dominated and stack machines have receded into virtual machines such as the JVM and the CLR.
 
-*** Two Stacks and a Dictionary
+### Two Stacks and a Dictionary
 
 The Brief VM revolves around a pair of stacks and a block of memory serving as a dictionary of subroutines.
 
@@ -303,35 +305,37 @@ The other stack is used by the VM as a return stack. The program counter is push
 
 The return stack is commonly also used to store data that is local to a subroutine. It is safe to push data here to be recovered after a subroutine call. It is not safe to use it for passing data between subroutines. That is what the data stack is for. Think of arguments vs. locals.
 
-*** Zero Operand Instructions
+### Zero Operand Instructions
 
 In a register machine each operator comes packed with operands. An add instruction, for example, needs to know which registers and/or memory locations to sum. In a stack machine virtually all instructions take exactly zero operands. This makes the code extremely compact and more composable. Composability is the key.
 
 Brief instructions are single bytes with the high bit reset:
 
+|---|---|---|---|---|---|---|---|
 | 0 | x | x | x | x | x | x | x |
 
 The lower seven bits become essentially an index into a function table. Each may consume and/or produce values on the data stack as well as having other side effects. Only three instructions manipulate the return stack. Two are push and pop which move values between the data and return stack. The third is (return) which consumes an address at which execution continues.
 
-*** Very Efficient Subroutines
+### Very Efficient Subroutines
 
 You will see that it is extremely common to factor out redundant sequences of code into subroutines. There is no “call” instruction. Instead, if the high bit is set then the following byte is taken and together (in little endian), with the high bit reset, they become an address to be called.
 
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x |
 
 This allows 15-bit addressing to definitions in the dictionary.
 
 Upon calling, the VM pushes the current program counter to the return stack. There is a return instruction, used to terminate definitions, which pops the return stack to continue execution after the call.
 
-** Brief Protocol
+## Brief Protocol
 
 Brief uses a common framing protocol for communication in both directions between the MCU and the PC. The payload to the MCU contains code to be executed or to be added to the dictionary. The payload to the PC contains events from the MCU.
 
-*** Framing
+### Framing
 
 TODO: explain non-Reflecta protocol
 
-*** Code
+### Code
 
 The payload from the PC to the MCU is in the form of Brief code. A trailing byte indicates whether the code is to be executed immediately (0x00) or appended to the dictionary as a new definition (0x01).
 
@@ -341,19 +345,19 @@ It is very likely that definitions end with a (return) instruction as the intent
 
 Code sent for immediate execution is not persisted in the dictionary and instead is executed immediately. It is not necessary (though harmless) to end code send for immediate execution with a (return).
 
-*** Primitive Instructions
+### Primitive Instructions
 
-**** Literals
+#### Literals
 
 Literal values are pushed to the data stack with lit8/lit16 instructions. These are followed by a 1- or 2-byte operand value as a parameter to the instruction. Literals (as well as branches below) are one of the few instructions to actually have operands. This is done by consuming the bytes at the current program counter and advancing the counter to skip them for execution.
 
-**** Branches
+#### Branches
 
 Relative branching is accomplished by branch/zbranch instructions. Conditional and unconditional branching is done by relative offsets as a parameter to the instruction (following byte). These (like literals) are among the few instructions with operands; in this case to save code size by not requiring a preceeding literal.
 
 Notice that there is only the single conditional branch instruction.  There are no 'branch if greater', 'branch if equal', etc. Instead the separate comparison instructions above are used as the preceding predicate.
 
-**** Quotations, Choice and If
+#### Quotations, Choice and If
 
 Quotations, choice and if need some explanation: The idea behind quotations is something like an anonymous lambda and is used with some nice syntax in the Brief language. The (quote) instruction precedes a sequence that is to be treated as an embedded definition essentially. It takes a length as an operand, pushes the address of the sequence of code following and then jumps over that code. The bytecode is expected to be terminated by a (return) and so the address on the stack is safe to be called. Quotations like these are used in combination with choice, if, setLoop, etc.
 
@@ -365,27 +369,27 @@ Another primitive making use of quotations is if which pops a predicate and a si
 
 Many secondary words in Brief also use quotation such as bi, tri, map, fold, etc. which act as higher-order functions applying.
 
-**** Events
+#### Events
 
 Events may be considered simple signed scalar values generated by the event instruction. In this case the data bytes consist of 0-, 1- or 2-bytes depending on the value taken from the stack (see Events section below).
 
 Events may instead be hand packed records of data, such as a heartbeat of sensor data. This is produced using the event{ and }event instructions along with data and cdata instructions between.
 
-**** Memory Fetch/Store
+#### Memory Fetch/Store
 
 Memory fetches take an address from the stack and push back the contents of that address (within the dictionary). Stores take a value and an address from the stack and store the value to the address. They come in single- and two-byte (little endian) variations.
 
-**** ALU Operations
+#### ALU Operations
 
 Binary and unary ALU operations pop one or two values and push back one. These include basic arithmetic, bitwise operations, comparison, etc.
 
 One interesting thing to note is that the truth values used in Brief are zero (0) for false as you’d expect but negative one (-1) for true. This is all bits on which unifies bitwise and logical operations. That is, there is a single set of and/or/xor/not instructions and they can be considered bitwise or logical as you wish.
 
-**** Return Stack Operations
+#### Return Stack Operations
 
 Aside from the usual data stack manipulation instructions (drop, dup, swap, pick, roll), there are several more for moving items between data and return stack. The instructions pop, push, peek each refer to the return stack (popping from return to data, pushing from data to return, …). The return stack is commonly also used to store data that is local to a subroutine. It is safe to push data here to be recovered after a subroutine call. It is not safe to use it for passing data between subroutines. That is what the data stack is for. Think of arguments vs. locals.
 
-**** Dictionary Manipulation
+#### Dictionary Manipulation
 
 The forget word is a Forthism for reverting to the address of a previously defined word; essentially forgetting it and any (potentially dependent words) defined thereafter.
 
@@ -397,7 +401,7 @@ The normal way of handling locals in Brief that need to survive a call and retur
 
 Local and arg space is allocated from the bottom of dictionary space. The (local) instruction is used for args as well despite the name. It simply pushes the address of the nth slot. This address can then be used by the regular fetch and store instructions. Because 16-bit values are commonly used in translated IL, there are single-byte instructions for this.
 
-**** Arduino Integration
+#### Arduino Integration
 
 Starting with basic setup and reading/write to GPIO pins. Note we treat high/low values as Brief-style booleans (-1 or 0) to play well with the logical and conditional operations.
 
@@ -407,7 +411,7 @@ Brief word addresses (or quotations) may be set to run upon interrupts.  For mor
 
 Servo support also comes by simple mapping of composable, zero-operand instructions to Arduino library calls: http://arduino.cc/en/Reference/Servo. We keep up to 48 servo instances attached.
 
-**** Instruction Set
+#### Instruction Set
 
 Here is a complete list of primitive instructions.
 
@@ -496,7 +500,7 @@ The signature follows the Forth-style stack effect format of input - output. Squ
 | 0x4D | milliseconds | - value | Get number of milliseconds since reset. |
 | 0x4E | pulseIn | mode pin - | Read a pulse on given pin. |
 
-*** Custom Instructions
+### Custom Instructions
 
 It’s likely that you can accomplish what you want without customizing the firmware; instead building from the primitives already available. However, if necessary you are free to do so.
 
@@ -523,9 +527,9 @@ In the Custom Instructions section below we add an instruction to do a blocking 
 
 	'nightlight setLoop
 
-*** Secondary Definitions
+### Secondary Definitions
 
-** Events
+## Events
 
 The MCU may send unsolicited data up to the PC in the form of an event. Requests may cause events, but it is not a request/response model. That is, the event is always async and is not correlated with a particular request (at the protocol level).
 
@@ -533,7 +537,7 @@ Events follow the same framing protocol from above. The payload is a single-byte
 
 | ID | 1 byte | Data | n bytes |
 
-*** Scalar Events
+### Scalar Events
 
 Events may be considered simple signed scalar values generated by the event instruction. In this case the data bytes consist of 0-, 1-, 2-bytes depending on the value taken from the stack. The value 0 is transmitted as zero-length data and may be used when the ID alone is enough information to signal an event. Other values have various lengths:
 
@@ -543,7 +547,7 @@ Events may be considered simple signed scalar values generated by the event inst
 
 For example `42 123 event` will emit a single byte value 123 as event ID 42.
 
-*** Vector Events
+### Vector Events
 
 Events may instead be hand packed records of data, such as a heartbeat of sensor data. This is produced using the event{ and }event instructions (notice that the parenthesis are part of the word tokens). For example 42 event{ will transmit the sequence number for the framing protocol along with an event ID of 42. Event data may be included using data and cdata. For example 123 cdata 456 data transmits the single-byte value 123 followed by the two-byte value 456. Finally }event emits the checksum and the end byte for the framing protocol. The PC will need to know to expect a 3-byte data payload packed this way for event ID 42.
 
@@ -553,7 +557,7 @@ An example heartbeat loop, reporting on a pair of analog pins, could be defined 
 
 This is to show the underlying Brief instructions for implementing events. Normally you only need to specify the packing and leave allocation of event IDs and wiring events to callbacks on the PC side to be handled for you by an instance of IMicrocontrollerHal.
 
-*** Reserved Event IDs
+### Reserved Event IDs
 
 Several event IDs are used by the MCU to notify the PC of protocol and VM activity. Normally you deal with these at the level of APIs on an instance of IMicrocontrollerHal, but this is build atop the same event system:
 
@@ -565,18 +569,18 @@ Several event IDs are used by the MCU to notify the PC of protocol and VM activi
 |           | 3 | Data stack overflow |
 |           | 4 | Indexed out of memory |
 
-** Brief Compiler
+## Brief Compiler
 
 TODO
 
-** Communications
+## Communications
 
 The MCU communicates with the PC over USB using the protocol and payload formats already described.
 
-** Brief Console
+## Brief Console
 
 TODO
 
-** Brief Interface
+## Brief Interface
 
 TODO
