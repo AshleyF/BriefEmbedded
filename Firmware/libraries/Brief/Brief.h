@@ -11,7 +11,7 @@
 #ifndef BRIEF_H
 #define BRIEF_H
 
-#define MEM_SIZE          512   // dictionary and local/args space
+#define MEM_SIZE          512   // dictionary space
 #define DATA_STACK_SIZE   4     // evaluation stack elements (int32s)
 #define RETURN_STACK_SIZE 4     // return and locals stack elements (int32s)
 
@@ -45,8 +45,7 @@ namespace brief
     int16_t pop(); // pop data from evaluation stack
     void error(uint8_t code); // error events
 
-    /* If, for some reason, you want to manually execute Brief bytecode in memory without going
-       through the Reflecta protocol: */
+    /* If, for some reason, you want to manually execute Brief bytecode in memory */
 
     void exec(int16_t address); // execute code at given address
 }

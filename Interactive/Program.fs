@@ -14,7 +14,7 @@ open System.IO
 open System.IO.Ports
 open System.Threading
 open Bytecode
-open Microsoft.Robotics.Brief
+open Brief
 
 let traceMode = ref false // whether to spew trace info (bytecode, disassembly, etc.)
 let compiler = new Compiler()
@@ -33,7 +33,6 @@ let squirt execute bytecode =
         if bytecode.Length > 127 then failwith "Too much bytecode in single packet"
         if !traceMode then trace ()
         let header = (byte bytecode.Length ||| if execute then 0x80uy else 0uy)
-        printfn "HEADER: %i" header
         port.Write(Array.create 1 header, 0, 1)
         port.Write(bytecode, 0, bytecode.Length)
         port.BaseStream.Flush()
@@ -197,9 +196,10 @@ let rec rep line =
                 | [Quotation [Token com]] :: stack' ->
                     printfn "Connecting to %s" com // TODO
                     let port = new SerialPort(com, 19200)
-                    port.DtrEnable <- true
                     serial := Some port
                     port.Open()
+                    port.DiscardInBuffer()
+                    port.DiscardOutBuffer()
                     reset ()
                     rep' stack' t
                 | _ -> failwith "Malformed connect syntax - usage: '7 connect"
@@ -257,7 +257,7 @@ let rec rep line =
             | "go" ->
                 traceMode := true
                 printfn "Trace mode: %b" !traceMode
-                rep' stack [Quotation [Token "/dev/ttyACM4"]; Token "conn"]
+                rep' stack [Quotation [Token "/dev/ttyACM7"]; Token "conn"]
             | "exit" ->
                 readThread.Abort()
                 failwith "exit"

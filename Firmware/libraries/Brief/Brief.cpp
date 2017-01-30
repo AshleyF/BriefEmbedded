@@ -23,16 +23,6 @@ namespace brief
 
     // Memory (dictionary)
 
-  void blink(int num)
-  {
-    for (int i = 0; i < num; i++) {
-	    ::digitalWrite(13, HIGH);
-	    ::delay(50);
-	    ::digitalWrite(13, LOW);
-	    ::delay(50);
-    }
-  }
-
     void error(uint8_t code); // forward decl
 
     uint8_t memory[MEM_SIZE]; // dictionary (and local/arg space for IL semantics)
@@ -968,11 +958,10 @@ namespace brief
 		memset(here++, 0); // ensure return
 		here = last;
 		exec(here);
-		blink(20);
 	    }
 	    else
 	    {
-		last = here = here - 1;
+		last = here;
 	    }
 	}
 	

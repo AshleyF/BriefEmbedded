@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Robotics.Brief
+﻿namespace Brief
 
 open System
 open Bytecode
