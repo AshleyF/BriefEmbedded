@@ -311,7 +311,7 @@ In a register machine each operator comes packed with operands. An add instructi
 
 Brief instructions are single bytes with the high bit reset:
 
-|---|---|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- | --- | --- |
 | 0 | x | x | x | x | x | x | x |
 
 The lower seven bits become essentially an index into a function table. Each may consume and/or produce values on the data stack as well as having other side effects. Only three instructions manipulate the return stack. Two are push and pop which move values between the data and return stack. The third is (return) which consumes an address at which execution continues.
@@ -320,7 +320,7 @@ The lower seven bits become essentially an index into a function table. Each may
 
 You will see that it is extremely common to factor out redundant sequences of code into subroutines. There is no “call” instruction. Instead, if the high bit is set then the following byte is taken and together (in little endian), with the high bit reset, they become an address to be called.
 
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | x | x | x | x | x | x | x | x | x | x | x | x | x | x | x |
 
 This allows 15-bit addressing to definitions in the dictionary.
