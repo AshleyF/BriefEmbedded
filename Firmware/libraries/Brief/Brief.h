@@ -20,7 +20,7 @@
 #define MAX_SERVOS        48    // max number of servos
 
 #define BOOT_EVENT_ID     0xFF  // event sent upon 'setup' (not reset)
-#define VM_EVENT_ID       0xFC  // event sent upon VM error
+#define VM_EVENT_ID       0xFE  // event sent upon VM error
 
 #define VM_ERROR_RETURN_STACK_UNDERFLOW 0
 #define VM_ERROR_RETURN_STACK_OVERFLOW  1

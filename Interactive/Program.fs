@@ -56,7 +56,7 @@ let rec readEvents () =
             match id with
             | id when id = dotEventId -> data |> toInt |> printf "\b\b%i\n> "
             | 0xFFuy -> printfn "Boot event"
-            | 0xFCuy ->
+            | 0xFEuy ->
                 printfn "VM Error: %s"
                     (match data with
                     | [|0uy|] -> "Return stack underflow"
