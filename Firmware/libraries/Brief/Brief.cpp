@@ -835,7 +835,7 @@ namespace brief
 
 	void setup()
 	{
-	    brief::setup(19200);
+	    brief::setup();
 	}
 
 	void loop()
@@ -862,11 +862,16 @@ namespace brief
 	
     This adds the new instruction as opcode 100. You can then give it a name and tell the compiler
     about it with `compiler.Instruction("delay", 100)` in PC-side code or can tell the Brief
-    interactive about it with `100 'delay instruction`. This is the extensibility story for Brief. */
+    interactive about it with `100 'delay instruction`. This is the extensibility story for Brief.
+    
+    Notice that custom instruction function may retrieve and return values via the
+    `brief::pop()` and `brief::push()` functions, as well as raise errors with
+    `brief::error()` taking a `uint8_t code`.
+*/
 
-    void setup(int16_t baud)
+    void setup()
     {
-	Serial.begin(baud);
+	Serial.begin(19200); // assumed by interactive
         resetBoard();
 
         bind(0,  ret);

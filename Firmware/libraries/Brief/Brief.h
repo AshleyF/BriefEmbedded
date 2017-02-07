@@ -33,7 +33,7 @@ namespace brief
     /* The following setup() and loop() are expected to be added to the main *.ino (before Reflecta)
        as you will find in Brief.ino. */
 
-    void setup(int16_t baud); // initialize everything, bind primitives
+    void setup(); // initialize everything, bind primitives
     void loop(); // execute loop word (execute/define driven by Reflecta)
 
     /* The following are meant for those wanting to bind their own functions into the Brief system.
