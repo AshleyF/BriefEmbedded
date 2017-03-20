@@ -866,7 +866,7 @@ namespace brief
     
     Notice that custom instruction function may retrieve and return values via the
     `brief::pop()` and `brief::push()` functions, as well as raise errors with
-    `brief::error()` taking a `uint8_t code`.
+    `brief::error(uint8_t code)`.
 */
 
     void setup()

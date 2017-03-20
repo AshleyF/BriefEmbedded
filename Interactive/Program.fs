@@ -257,7 +257,7 @@ let rec rep line =
             | "go" ->
                 traceMode := true
                 printfn "Trace mode: %b" !traceMode
-                rep' stack [Quotation [Token "/dev/ttyACM7"]; Token "conn"]
+                rep' stack [Quotation [Token "/dev/ttyACM0"]; Token "conn"; Quotation [Token "tiles.b"]; Token "load"]
             | "exit" ->
                 readThread.Abort()
                 failwith "exit"
