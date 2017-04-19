@@ -1,0 +1,30 @@
+yntax Coloring Map For Audio
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+Brief	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setup	KEYWORD2
+loop	KEYWORD3
+memget	KEYWORD4
+memset	KEYWORD5
+bind	KEYWORD6
+push	KEYWORD7
+pop	KEYWORD8
+error	KEYWORD9
+exec	KEYWORD10
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+MEM_SIZE	KEYWORD11
+DATA_STACK_SIZE	KEYWORD12
+RETURN_STACK_SIZE	KEYWORD13
