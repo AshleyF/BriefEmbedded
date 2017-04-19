@@ -17,7 +17,7 @@
 
 #define MAX_PRIMITIVES    128   // max number of primitive (7-bit) instructions
 #define MAX_INTERRUPTS    6     // max number of ISR words
-#define MAX_SERVOS        48    // max number of servos
+#define MAX_SERVO_COUNT   48    // max number of servos
 
 #define BOOT_EVENT_ID     0xFF  // event sent upon 'setup' (not reset)
 #define VM_EVENT_ID       0xFE  // event sent upon VM error
