@@ -796,9 +796,9 @@ namespace brief
 
 	http://arduino.cc/en/Reference/Servo
 
-    We keep up to MAX_SERVOS (48) servo instances attached. */
+    We keep up to MAX_SERVO_COUNT (48) servo instances attached. */
 
-    Servo servos[MAX_SERVOS];
+    Servo servos[MAX_SERVO_COUNT];
 
     void servoAttach()
     {
