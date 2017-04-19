@@ -856,7 +856,7 @@ namespace brief
 
 	void setup()
 	{
-	    brief::setup(19200);
+	    brief::setup();
 	    brief::bind(100, delayMillis);
 	}
 	
