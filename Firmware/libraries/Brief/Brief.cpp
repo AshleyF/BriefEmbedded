@@ -27,7 +27,7 @@ namespace brief
 
     uint8_t memory[MEM_SIZE]; // dictionary (and local/arg space for IL semantics)
 
-    uint8_t mem(int16_t address) // fetch with bounds checking
+    uint8_t memget(int16_t address) // fetch with bounds checking
     {
         if (address < 0 || address >= MEM_SIZE)
         {
@@ -151,16 +151,16 @@ namespace brief
         int16_t i;
         do
         {
-            i = mem(p++);
+            i = memget(p++);
             if ((i & 0x80) == 0) // instruction?
             {
                 instructions[i](); // execute instruction
             }
             else // address to call
             {
-                if (mem(p + 1) != 0) // not followed by return (TCO)
+                if (memget(p + 1) != 0) // not followed by return (TCO)
                     rpush(p + 1); // return address
-                p = ((i << 8) & 0x7F00) | mem(p); // jump
+                p = ((i << 8) & 0x7F00) | memget(p); // jump
             }
         } while (p >= 0); // -1 pushed to return stack
     }
@@ -230,7 +230,7 @@ namespace brief
 	Serial.write(len - 1);
 	for (int16_t i = 0; i < len; i++)
 	{
-	    Serial.write(mem(here + i));
+	    Serial.write(memget(here + i));
 	}
 	Serial.flush();
     }
@@ -286,13 +286,13 @@ namespace brief
 
     inline int16_t mem16(int16_t address) // helper (not Brief instruction)
     {
-        int16_t x = ((int16_t)mem(address)) << 8;
-        return x | mem(address + 1);
+        int16_t x = ((int16_t)memget(address)) << 8;
+        return x | memget(address + 1);
     }
 
     void fetch8()
     {
-        *s = mem(*s);
+        *s = memget(*s);
     }
 
     void store8()
@@ -320,7 +320,7 @@ namespace brief
 
     void lit8()
     {
-        push(mem(p++));
+        push(memget(p++));
     }
 
     void lit16()
@@ -555,7 +555,7 @@ namespace brief
 
     void quote()
     {
-        uint8_t len = mem(p++);
+        uint8_t len = memget(p++);
         push(p); // address of quotation
         p += len; // jump over
     }

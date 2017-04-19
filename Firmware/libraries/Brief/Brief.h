@@ -36,6 +36,12 @@ namespace brief
     void setup(); // initialize everything, bind primitives
     void loop(); // execute loop word (execute/define driven by Reflecta)
 
+    /* The following allow peeking/poking the Brief dictionary */
+
+    uint8_t memget(int16_t address); // fetch with bounds checking
+    void memset(int16_t address, uint8_t value); // store with bounds checking
+    // TODO: expose `here`, along with appending call, return, literal, etc.
+
     /* The following are meant for those wanting to bind their own functions into the Brief system.
        New functions can be bound to the instruction table, they can push/pop data to interact with
        other Brief instructions, and they may emit errors up to the PC. */
