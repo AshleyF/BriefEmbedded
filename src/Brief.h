@@ -42,6 +42,12 @@ namespace brief
     void memset(int16_t address, uint8_t value); // store with bounds checking
     // TODO: expose `here`, along with appending call, return, literal, etc.
 
+    /* The following get/set the program counter; allowing for deeply integrated external instructions
+       that fetch operands or do self-modification */
+
+    int16_t pget();
+    void pset(int16_t pp);
+
     /* The following are meant for those wanting to bind their own functions into the Brief system.
        New functions can be bound to the instruction table, they can push/pop data to interact with
        other Brief instructions, and they may emit errors up to the PC. */

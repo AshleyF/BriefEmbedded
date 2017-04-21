@@ -141,6 +141,16 @@ namespace brief
 
     int16_t p; // program counter (VM instruction pointer)
 
+    int16_t pget()
+    {
+        return p;
+    }
+
+    void pset(int16_t pp)
+    {
+        p = pp;
+    }
+
     void ret() // return instruction
     {
         p = rpop();
@@ -577,6 +587,21 @@ namespace brief
         }
     }
 
+    void next()
+    {
+        int16_t count = rpop() - 1;
+        int16_t rel = memget(p++);
+        if (count > 0)
+        {
+            rpush(count);
+            p -= (rel + 2);
+        }
+    }
+
+    void nop()
+    {
+    }
+
 /*  A Brief word (address) may be set to run in the main loop. Also, a loop counter is
     maintained for use by conditional logic (throttling for example). */
 
@@ -856,7 +881,7 @@ namespace brief
 
 	void setup()
 	{
-	    brief::setup();
+	    brief::setup(19200);
 	    brief::bind(100, delayMillis);
 	}
 	
@@ -932,6 +957,8 @@ namespace brief
         bind(55, detachISR);
         bind(56, milliseconds);
         bind(57, pulseIn);
+	bind(58, next);
+	bind(59, nop);
 
         for (int16_t i = 0; i < MAX_INTERRUPTS; i++)
         {
