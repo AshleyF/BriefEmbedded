@@ -816,31 +816,6 @@ namespace brief
         detachInterrupt(interrupt);
     }
 
-/*  Servo support also comes by simple mapping of composable, zero-operand instructions to
-    Arduino library calls:
-
-	http://arduino.cc/en/Reference/Servo
-
-    We keep up to MAX_SERVO_COUNT (48) servo instances attached. */
-
-    Servo servos[MAX_SERVO_COUNT];
-
-    void servoAttach()
-    {
-        int16_t pin = pop();
-        servos[pin].attach(pin);
-    }
-
-    void servoDetach()
-    {
-        servos[pop()].detach();
-    }
-
-    void servoWriteMicros()
-    {
-        servos[pop()].writeMicroseconds(pop());
-    }
-
 /*  A couple of stragglers... */
 
     void milliseconds()
