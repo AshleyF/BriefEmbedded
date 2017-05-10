@@ -1,6 +1,8 @@
 ﻿namespace Brief
 
 open System
+open System.IO.Ports
+open System.Threading
 open Bytecode
 
 (* Below is a class meant to be used in C#-land. As such we give a little object wrapper with
@@ -59,3 +61,71 @@ type Compiler() =
         |> disassembleBrief dict
         |> printBrief dict
         |> List.map ((+) " ") |> List.reduce (+)
+
+type Communication(eventFn, traceFn: (bool -> byte[] -> unit) option) =
+    let (serial : SerialPort option ref) = ref None
+    let rec readEvents () =
+        let event message =
+            match eventFn with
+            | Some callback -> callback message
+            | None -> ()
+        match !serial with
+        | Some port ->
+            if port.IsOpen && port.BytesToRead > 0 then
+                let len = port.ReadByte()
+                let id = port.ReadByte() |> byte
+                let data = Array.create len 0uy
+                port.Read(data, 0, len) |> ignore
+                let toInt d =
+                    match Array.length d with
+                    | 0 -> 0s
+                    | 1 -> d.[0] |> sbyte |> int16
+                    | 2 -> (int16 d.[0] <<< 8) ||| int16 d.[1]
+                    | _ -> failwith "Invalid event data."
+                match id with
+                | id when id = 0xF0uy -> data |> toInt |> sprintf "%i" |> event
+                | 0xFFuy -> event "Boot event"
+                | 0xFEuy ->
+                    sprintf "VM Error: %s"
+                        (match data with
+                        | [|0uy|] -> "Return stack underflow"
+                        | [|1uy|] -> "Return stack overflow"
+                        | [|2uy|] -> "Data stack underflow"
+                        | [|3uy|] -> "Data stack overflow"
+                        | [|4uy|] -> "Out of memory"
+                        | _ -> "Unknown") |> event
+                | _ -> sprintf "Event (%i): %A" id data |> event
+        | None -> ()
+        Thread.Sleep(100)
+        readEvents ()
+    let mutable (readThread: Thread) = null
+    member x.Connect(com) =
+        let port = new SerialPort(com, 19200)
+        serial := Some port
+        port.Open()
+        port.DiscardInBuffer()
+        port.DiscardOutBuffer()
+        readThread <- new Thread(readEvents, IsBackground = true)
+        readThread.Start()
+    member x.Disconnect() =
+        match !serial with
+        | Some port ->
+            port.Close()
+            serial := None
+            readThread.Abort()
+            readThread <- null
+        | None -> failwith "Not connected"
+    member x.SendBytes(execute, bytecode) =
+        let trace () =
+            match traceFn with
+            | Some callback -> callback execute bytecode
+            | None -> ()
+        match !serial with
+        | Some port ->
+            if bytecode.Length > 127 then failwith "Too much bytecode in single packet"
+            trace ()
+            let header = (byte bytecode.Length ||| if execute then 0x80uy else 0uy)
+            port.Write(Array.create 1 header, 0, 1)
+            port.Write(bytecode, 0, bytecode.Length)
+            port.BaseStream.Flush()
+        | None -> failwith "Not connected to MCU."

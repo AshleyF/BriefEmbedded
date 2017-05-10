@@ -11,67 +11,21 @@
 
 open System
 open System.IO
-open System.IO.Ports
-open System.Threading
 open Bytecode
 open Brief
 
-let traceMode = ref false // whether to spew trace info (bytecode, disassembly, etc.)
 let compiler = new Compiler()
-
-let (serial : SerialPort option ref) = ref None
-
-let squirt execute bytecode =
-    let trace () =
-        printfn "%s:%s\nBytecode (%i): %s\n"
-            (if execute then "Execute" else "Define")
-            (compiler.Disassemble(bytecode))
-            bytecode.Length
-            (new String(bytecode |> Array.map (sprintf "%02x ") |> Seq.concat |> Array.ofSeq))
-    match !serial with
-    | Some port ->
-        if bytecode.Length > 127 then failwith "Too much bytecode in single packet"
-        if !traceMode then trace ()
-        let header = (byte bytecode.Length ||| if execute then 0x80uy else 0uy)
-        port.Write(Array.create 1 header, 0, 1)
-        port.Write(bytecode, 0, bytecode.Length)
-        port.BaseStream.Flush()
-    | None -> failwith "Not connected to MCU."
-
-let dotEventId = 0xF0uy
-let rec readEvents () =
-    match !serial with
-    | Some port ->
-        if port.IsOpen && port.BytesToRead > 0 then
-            let len = port.ReadByte()
-            let id = port.ReadByte() |> byte
-            let data = Array.create len 0uy
-            port.Read(data, 0, len) |> ignore
-            let toInt d =
-                match Array.length d with
-                | 0 -> 0s
-                | 1 -> d.[0] |> sbyte |> int16
-                | 2 -> (int16 d.[0] <<< 8) ||| int16 d.[1]
-                | _ -> failwith "Invalid event data."
-            match id with
-            | id when id = dotEventId -> data |> toInt |> printf "\b\b%i\n> "
-            | 0xFFuy -> printfn "Boot event"
-            | 0xFEuy ->
-                printfn "VM Error: %s"
-                    (match data with
-                    | [|0uy|] -> "Return stack underflow"
-                    | [|1uy|] -> "Return stack overflow"
-                    | [|2uy|] -> "Data stack underflow"
-                    | [|3uy|] -> "Data stack overflow"
-                    | [|4uy|] -> "Out of memory"
-                    | _ -> "Unknown")
-            | _ -> printfn "Event (%i): %A" id data
-    | None -> ()
-    Thread.Sleep(100)
-    readEvents ()
-
-let readThread = new Thread(readEvents, IsBackground = true)
-readThread.Start()
+let traceMode = ref false // whether to spew trace info (bytecode, disassembly, etc.)
+let comm =
+    new Communication(
+        Some (printfn "Event: %s"),
+        Some (fun execute bytecode ->
+            if !traceMode then
+                printfn "%s:%s\nBytecode (%i): %s\n"
+                    (if execute then "Execute" else "Define")
+                    (compiler.Disassemble(bytecode))
+                    bytecode.Length
+                    (new String(bytecode |> Array.map (sprintf "%02x ") |> Seq.concat |> Array.ofSeq))))
 
 (* Here we use the lexer/parser to process lines of Brief code. Most everything is handled by the
    compiler, but several words are intercepted here as "compile-time" words for the interactive:
@@ -186,7 +140,7 @@ readThread.Start()
     bytecode can be seen with tracing on. *)
 
 let rec rep line =
-    let reset () = compiler.EagerCompile("(reset)") |> fst |> squirt true
+    let reset () = comm.SendBytes(true, compiler.EagerCompile("(reset)") |> fst)
     let p = line |> parse
     let rec rep' stack = function
         | Token tok :: t ->
@@ -194,21 +148,13 @@ let rec rep line =
             | "connect" | "conn" ->
                 match stack with
                 | [Quotation [Token com]] :: stack' ->
-                    printfn "Connecting to %s" com // TODO
-                    let port = new SerialPort(com, 19200)
-                    serial := Some port
-                    port.Open()
-                    port.DiscardInBuffer()
-                    port.DiscardOutBuffer()
+                    printfn "Connecting to %s" com
+                    comm.Connect(com)
                     reset ()
                     rep' stack' t
                 | _ -> failwith "Malformed connect syntax - usage: '7 connect"
             | "disconnect" ->
-                match !serial with
-                | Some port ->
-                    port.Close()
-                    serial := None
-                | None -> failwith "Not connected"
+                comm.Disconnect()
                 rep' stack t
             | "reset" ->
                 reset ()
@@ -243,7 +189,7 @@ let rec rep line =
                     rep' stack' t
                 | _ -> failwith "Malformed load syntax - usage: 'foo.txt load"
             | "\\" -> rep' stack []
-            | "." -> rep' stack (Number (int16 dotEventId) :: Token "event" :: t)
+            | "." -> rep' stack (Number (int16 0xF0uy) :: Token "event" :: t)
             | "prompt" ->
                 Console.ReadLine() |> ignore
                 rep' stack t
@@ -259,14 +205,14 @@ let rec rep line =
                 printfn "Trace mode: %b" !traceMode
                 rep' stack [Quotation [Token "/dev/ttyACM0"]; Token "conn"; Quotation [Token "tiles.b"]; Token "load"]
             | "exit" ->
-                readThread.Abort()
+                comm.Disconnect()
                 failwith "exit"
             | _ -> rep' ([Token tok] :: stack) t
         | node :: t -> rep' ([node] :: stack) t
         | [] -> List.rev stack
     let exe, def = compiler.EagerAssemble(rep' [] p |> List.concat)
-    if def.Length > 0 then squirt false def
-    if exe.Length > 0 then squirt true  (Array.concat [exe; [|0uy|]])
+    if def.Length > 0 then comm.SendBytes(false, def)
+    if exe.Length > 0 then comm.SendBytes(true, (Array.concat [exe; [|0uy|]]))
 
 let rec repl () =
     printf "\n> "
