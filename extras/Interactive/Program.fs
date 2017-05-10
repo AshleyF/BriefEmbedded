@@ -1,4 +1,4 @@
-﻿(* This is a very basic interactive console for working with an MCU running the Brief firmware.
+(* This is a very basic interactive console for working with an MCU running the Brief firmware.
    This is extreemely useful for debugging and experimenting with new hardware; allowing interactive
    compilation and execution Brief code as well as adding of definitions to the dictionary.
 
