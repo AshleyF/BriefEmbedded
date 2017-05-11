@@ -62,13 +62,10 @@ type Compiler() =
         |> printBrief dict
         |> List.map ((+) " ") |> List.reduce (+)
 
-type Communication(eventFn, traceFn: (bool -> byte[] -> unit) option) =
+type Communication(eventFn : Action<string>, traceFn: Action<bool, byte[]>) =
     let (serial : SerialPort option ref) = ref None
     let rec readEvents () =
-        let event message =
-            match eventFn with
-            | Some callback -> callback message
-            | None -> ()
+        let event message = if eventFn <> null then eventFn.Invoke(message)
         match !serial with
         | Some port ->
             if port.IsOpen && port.BytesToRead > 0 then
@@ -116,10 +113,7 @@ type Communication(eventFn, traceFn: (bool -> byte[] -> unit) option) =
             readThread <- null
         | None -> failwith "Not connected"
     member x.SendBytes(execute, bytecode) =
-        let trace () =
-            match traceFn with
-            | Some callback -> callback execute bytecode
-            | None -> ()
+        let trace () = if traceFn <> null then traceFn.Invoke(execute, bytecode)
         match !serial with
         | Some port ->
             if bytecode.Length > 127 then failwith "Too much bytecode in single packet"

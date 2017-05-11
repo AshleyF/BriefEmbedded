@@ -18,8 +18,8 @@ let compiler = new Compiler()
 let traceMode = ref false // whether to spew trace info (bytecode, disassembly, etc.)
 let comm =
     new Communication(
-        Some (printfn "Event: %s"),
-        Some (fun execute bytecode ->
+        (fun e -> printfn "Event: %s" e),
+        (fun execute bytecode ->
             if !traceMode then
                 printfn "%s:%s\nBytecode (%i): %s\n"
                     (if execute then "Execute" else "Define")
