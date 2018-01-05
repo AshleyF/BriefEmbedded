@@ -17,7 +17,7 @@ It is comprised of the following:
 * Protocol – an extensible and composable set of commands and events.
 * Language – a Forth-like interactive scripting language compiled for the VM.
 * Interactive – console for interactive experimentation and development.
-* Interface – from managed code.
+* Interface – from managed code (not in this fork, [but here](https://github.com/ashleyf/brief/tree/gh-pages/embedded)).
 
 You will find that there is absolutely nothing off-limits in the Brief system. It purposely leaves the “wires exposed” so to speak. It is meant to be tinkered with at all levels. The interactive REPL is a wonderful way to experiment with new hardware. You can go much further (still without cracking open the firmware) by customizing the protocol with your own commands and events. You can customize the heartbeat payload. You can write your own driver libraries for new hardware. You can script the firmware with your own real time control logic. Finally, the firmware itself is open source and you’re free to extend it. You can easily do so in ways that continue to work seamlessly within the existing scriptable protocol, commands and event system.
 
@@ -45,7 +45,7 @@ If you plan to modify the firmware (see Custom Instructions below) then you will
 
 1. Install Arduino IDE
 2. Install TeensyDuino
-3. Install Brief and Reflecta libraries (copy to \libraries\)
+3. Install Brief and Reflecta libraries (via Arduina IDE)
 
 ### Interactive Console
 
