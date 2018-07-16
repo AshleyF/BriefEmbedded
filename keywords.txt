@@ -1,4 +1,4 @@
-yntax Coloring Map For Audio
+# Syntax Coloring Map For Brief
 #######################################
 
 #######################################
