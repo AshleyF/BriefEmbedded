@@ -12,19 +12,19 @@ Brief	KEYWORD1
 #######################################
 
 setup	KEYWORD2
-loop	KEYWORD3
-memget	KEYWORD4
-memset	KEYWORD5
-bind	KEYWORD6
-push	KEYWORD7
-pop	KEYWORD8
-error	KEYWORD9
-exec	KEYWORD10
+loop	KEYWORD2
+memget	KEYWORD2
+memset	KEYWORD2
+bind	KEYWORD2
+push	KEYWORD2
+pop	KEYWORD2
+error	KEYWORD2
+exec	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 #######################################
 
-MEM_SIZE	KEYWORD11
-DATA_STACK_SIZE	KEYWORD12
-RETURN_STACK_SIZE	KEYWORD13
+MEM_SIZE	LITERAL1
+DATA_STACK_SIZE	LITERAL1
+RETURN_STACK_SIZE	LITERAL1
