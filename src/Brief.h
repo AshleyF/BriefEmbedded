@@ -5,7 +5,6 @@
 
 #define __STDC_LIMIT_MACROS
 #include <Arduino.h>
-#include <Servo.h>
 #include <Wire.h>
 
 #ifndef BRIEF_H
