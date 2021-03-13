@@ -17,8 +17,6 @@ void setup()
     // In the interactive: 100 'delay instruction
     // In .NET: compiler.Instruction("delay", 100)
     brief::bind(100, delayMillis);
-    pinMode(13, OUTPUT);
-    digitalWrite(13, LOW);
 }
 
 void loop()
