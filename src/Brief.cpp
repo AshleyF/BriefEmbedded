@@ -2,7 +2,7 @@
 
 namespace brief
 {
-/*  The Brief VM revolves around a pair of stacks and a block of memory serving as a dictionary of
+    /* The Brief VM revolves around a pair of stacks and a block of memory serving as a dictionary of
     subroutines.
 
     The dictionary is typically 1Kb. This is where Brief byte code is stored and executed. While it
@@ -35,7 +35,7 @@ namespace brief
             return 0;
         }
 
-	return memory[address];
+        return memory[address];
     }
 
     void memset(int16_t address, uint8_t value) // store with bounds checking
@@ -54,7 +54,7 @@ namespace brief
 
     int16_t dstack[DATA_STACK_SIZE]; // eval stack (and args in Brief semantics)
 
-    int16_t* s; // data stack pointer
+    int16_t* s = dstack; // data stack pointer
 
     void push(int16_t x)
     {
@@ -73,6 +73,7 @@ namespace brief
         if (s < dstack)
         {
             error(VM_ERROR_DATA_STACK_UNDERFLOW);
+            return 0;
         }
         else
         {
@@ -103,6 +104,7 @@ namespace brief
         if (r < rstack)
         {
             error(VM_ERROR_RETURN_STACK_UNDERFLOW);
+            return 0;
         }
         else
         {
@@ -110,7 +112,7 @@ namespace brief
         }
     }
 
-/*  Brief instructions are single bytes with the high bit reset:
+    /* Brief instructions are single bytes with the high bit reset:
 
       0xxxxxxx
 
@@ -177,20 +179,20 @@ namespace brief
 
     void exec(int16_t address) // execute code at given address
     {
-        r = rstack - 1; // reset return stack
+        r = rstack; // reset return stack
         rpush(-1); // causing `run()` to fall through upon completion
         p = address;
         run();
     }
 
-/*  As the dictionary is filled `here` points to the next available byte, while `last` points to the
+    /* As the dictionary is filled `here` points to the next available byte, while `last` points to the
     byte following the previously commited definition. This way the dictionary also acts as a scratch
     buffer; filled with event data or with "immediate mode" instructions, then rolled back to `last`. */
 
     int16_t here; // dictionary 'here' pointer
     int16_t last; // last definition address
 
-/*  Events are used to send unsolicited data up to the PC. Requests may cause events, but it is
+    /* Events are used to send unsolicited data up to the PC. Requests may cause events, but it is
     not a request/response model. That is, the event is always async and is not correlated with a
     particular request (at the protocol level).
 
@@ -218,7 +220,7 @@ namespace brief
 
     void eventHeader() // pack event payload (ID from stack)
     {
-	eventBuffer = here; // note: initially `MEM_SIZE` to cause OOM if body/footer without header
+        eventBuffer = here; // note: initially `MEM_SIZE` to cause OOM if body/footer without header
         memset(eventBuffer++, pop());
     }
 
@@ -236,13 +238,13 @@ namespace brief
 
     void eventFooter() // send packed event
     {
-	byte len = eventBuffer - here;
-	Serial.write(len - 1);
-	for (int16_t i = 0; i < len; i++)
-	{
-	    Serial.write(memget(here + i));
-	}
-	Serial.flush();
+        byte len = eventBuffer - here;
+        Serial.write(len - 1);
+        for (int16_t i = 0; i < len; i++)
+        {
+            Serial.write(memget(here + i));
+        }
+        Serial.flush();
     }
 
     void event(uint8_t id, int16_t val) // helper to send simple scaler events
@@ -265,7 +267,7 @@ namespace brief
         eventFooter();
     }
 
-/*  Several event IDs are used to notify the PC of VM activity and errors. Defined in Brief.h:
+    /* Several event IDs are used to notify the PC of VM activity and errors. Defined in Brief.h:
 
       ID                 Value    Meaning
       0xFF   Reset       None     MCU reset
@@ -277,10 +279,10 @@ namespace brief
 
     void error(uint8_t code) // error events
     {
-	event(code, VM_EVENT_ID);
+        event(code, VM_EVENT_ID);
     }
 
-/*  Below are the primitive Brief instructions; later bound in setup. All of these functions take no
+    /* Below are the primitive Brief instructions; later bound in setup. All of these functions take no
     parameters and return nothing. Arguments and return values flow through the stack. */
 
     void eventOp() // send event up to PC containing top stack value
@@ -290,7 +292,7 @@ namespace brief
         event(id, val);
     }
 
-/*  Memory `fetch`/`store` instructions. Fetches take an address from the stack and push back the
+    /* Memory `fetch`/`store` instructions. Fetches take an address from the stack and push back the
     contents of that address (within the dictionary). Stores take a value and an address from the
     stack and store the value to the address. */
 
@@ -323,7 +325,7 @@ namespace brief
         memset(a + 1, v);
     }
 
-/*  Literal values are pushed to the stack by the `lit8`/`lit16` instructions. The values is a
+    /* Literal values are pushed to the stack by the `lit8`/`lit16` instructions. The values is a
     parameter to the instruction. Literals (as well as branches below) are one of the few
     instructions to actually have operands. This is done by consuming the bytes at the current
     program counter and advancing the counter to skip them for execution. */
@@ -338,7 +340,7 @@ namespace brief
         push(mem16(p++)); p++;
     }
 
-/*  Binary and unary ALU operations pop one or two values and push back one. These include basic
+    /* Binary and unary ALU operations pop one or two values and push back one. These include basic
     arithmetic, bitwise operations, comparison, etc.
     
     The truth value used in Brief is all bits reset (-1) and so the bitwise `and`/`or`/`not` words
@@ -394,7 +396,7 @@ namespace brief
 
     void shift()
     {
-	int16_t x = pop(); // negative values shift left, positive right
+        int16_t x = pop(); // negative values shift left, positive right
         if (x < 0) *s = *s << -x;
         else *s = *s >> x;
     }
@@ -453,15 +455,15 @@ namespace brief
 
     void inc()
     {
-        *s = ++(*s);
+        *s = *s + 1;
     }
 
     void dec()
     {
-        *s = --(*s);
+        *s = *s - 1;
     }
 
-/*  Stack manipulation instructions */
+    /* Stack manipulation instructions */
 
     void drop()
     {
@@ -499,10 +501,10 @@ namespace brief
 
     void clr() // clear stack
     {
-        s = dstack - 1;
+        s = dstack;
     }
 
-/*  Moving items between data and return stack. The return stack is commonly also used to store data
+    /* Moving items between data and return stack. The return stack is commonly also used to store data
     that is local to a subroutine. It is safe to push data here to be recovered after a subroutine
     call. It is not safe to use it for passing data between subroutines. That is what the data stack
     is for. Think of arguments vs. locals. The normal way of handling locals in Brief that need to
@@ -523,7 +525,7 @@ namespace brief
         push(*r);
     }
 
-/*  Dictionary manipulation instructions:
+    /* Dictionary manipulation instructions:
 
     The `forget` function is a Forthism for reverting to the address of a previously defined word;
     essentially forgetting it and any (potentially dependent words) defined thereafter. */
@@ -531,11 +533,10 @@ namespace brief
     void forget() // revert dictionary pointer to TOS
     {
         int16_t i = pop();
-        if (i < here) // don't "remember" random memory!
-            here = i;
+        if (i < here) here = i; // don't "remember" random memory!
     }
 
-    /*  A `call` instruction pops an address and calls it; pushing the current `p` as to return. */
+    /* A `call` instruction pops an address and calls it; pushing the current `p` as to return. */
 
     void call()
     {
@@ -543,7 +544,7 @@ namespace brief
         p = pop();
     }
 
-/*  Quotations and `choice` need some explanation. The idea behind quotations is something like
+    /* Quotations and `choice` need some explanation. The idea behind quotations is something like
     an anonymous lambda and is used with some nice syntax in the Brief language. The `quote`
     instruction precedes a sequence that is to be treated as an embedded definition
     essentially. It takes a length as an operand, pushes the address of the sequence of code
@@ -572,7 +573,7 @@ namespace brief
 
     void choice()
     {
-	int16_t f = pop(), t = pop();
+        int16_t f = pop(), t = pop();
         rpush(p);
         p = pop() == 0 ? f : t;
     }
@@ -602,7 +603,7 @@ namespace brief
     {
     }
 
-/*  A Brief word (address) may be set to run in the main loop. Also, a loop counter is
+    /* A Brief word (address) may be set to run in the main loop. Also, a loop counter is
     maintained for use by conditional logic (throttling for example). */
 
     int16_t loopword = -1; // address of loop word
@@ -625,7 +626,7 @@ namespace brief
         loopword = -1;
     }
 
-/*  Upon first connecting to a board, the PC will execute a reset so that assumptions about
+    /* Upon first connecting to a board, the PC will execute a reset so that assumptions about
     dictionary contents and such hold true. */ 
 
     void resetBoard() // likely called initialy upon connecting from PC
@@ -636,7 +637,7 @@ namespace brief
         loopIterations = 0;
     }
 
-/*  Here begins all of the Arduino-specific instructions.
+    /* Here begins all of the Arduino-specific instructions.
 
     Starting with basic setup and reading/write to GPIO pins. Note we treat `HIGH`/`LOW` values as
     Brief-style booleans (-1 or 0) to play well with the logical and conditional operations. */
@@ -666,10 +667,10 @@ namespace brief
         ::analogWrite(pop(), pop());
     }
 
-/*  I2C support comes from several instructions, essentially mapping composable, zero-operand
+    /* I2C support comes from several instructions, essentially mapping composable, zero-operand
     instructions to functions in the Arduino library:
 
-	http://arduino.cc/en/Reference/Wire
+    http://arduino.cc/en/Reference/Wire
 
     Brief words (addresses/quotations) may be hooked to respond to Wire events. */
 
@@ -690,7 +691,7 @@ namespace brief
 
     void wireRead()
     {
-        while (Wire.available() < 1); // TODO: blocking?
+        while (Wire.available() < 1);
         push(Wire.read());
     }
 
@@ -742,10 +743,10 @@ namespace brief
         Wire.onRequest(wireOnRequest);
     }
 
-/*  Brief word addresses (or quotations) may be set to run upon interrupts. For more info on
+    /* Brief word addresses (or quotations) may be set to run upon interrupts. For more info on
     the argument values and behavior, see:
 
-	http://arduino.cc/en/Reference/AttachInterrupt
+    http://arduino.cc/en/Reference/AttachInterrupt
 
     We keep a mapping of up to MAX_INTERRUPTS (6) words. */
 
@@ -816,7 +817,7 @@ namespace brief
         detachInterrupt(interrupt);
     }
 
-/*  A couple of stragglers... */
+    /* A couple of stragglers... */
 
     void milliseconds()
     {
@@ -828,20 +829,20 @@ namespace brief
         push(::pulseIn(pop(), pop()));
     }
 
-/*  The Brief VM needs to be hooked into the main setup and loop on the hosting project.
+    /* The Brief VM needs to be hooked into the main setup and loop on the hosting project.
     A minimal *.ino would contain something like:
-    
-	#include <Brief.h>
 
-	void setup()
-	{
-	    brief::setup();
-	}
+    #include <Brief.h>
 
-	void loop()
-	{
-	    brief::loop();
-	}
+    void setup()
+    {
+        brief::setup();
+    }
+
+    void loop()
+    {
+        brief::loop();
+    }
 
     Brief setup binds all of the instruction functions from above. After setup, the hosting
     project is free to bind its own custom functions as well!
@@ -849,29 +850,28 @@ namespace brief
     An example of this could be to add a `delayMillis` instruction. Such an instruction is not
     included in the VM to discourage blocking code, but you're free to add whatever you like:
     
-	void delayMillis()
-	{
-	    delay((int)brief::pop());
-	}
+    void delayMillis()
+    {
+        delay((int)brief::pop());
+    }
 
-	void setup()
-	{
-	    brief::setup(19200);
-	    brief::bind(100, delayMillis);
-	}
-	
+    void setup()
+    {
+        brief::setup(19200);
+        brief::bind(100, delayMillis);
+    }
+
     This adds the new instruction as opcode 100. You can then give it a name and tell the compiler
     about it with `compiler.Instruction("delay", 100)` in PC-side code or can tell the Brief
     interactive about it with `100 'delay instruction`. This is the extensibility story for Brief.
     
     Notice that custom instruction function may retrieve and return values via the
     `brief::pop()` and `brief::push()` functions, as well as raise errors with
-    `brief::error(uint8_t code)`.
-*/
+    `brief::error(uint8_t code)`. */
 
     void setup()
     {
-	Serial.begin(19200); // assumed by interactive
+        Serial.begin(19200); // assumed by interactive
         resetBoard();
 
         bind(0,  ret);
@@ -932,8 +932,8 @@ namespace brief
         bind(55, detachISR);
         bind(56, milliseconds);
         bind(57, pulseIn);
-	bind(58, next);
-	bind(59, nop);
+        bind(58, next);
+        bind(59, nop);
 
         for (int16_t i = 0; i < MAX_INTERRUPTS; i++)
         {
@@ -943,7 +943,7 @@ namespace brief
         event(BOOT_EVENT_ID, 0); // boot event
     }
 
-/*  The payload from the PC to the MCU is in the form of Brief code. A header byte indicates
+    /* The payload from the PC to the MCU is in the form of Brief code. A header byte indicates
     the length and whether the code is to be executed immediately (0x00) or appended to the
     dictionary as a new definition (0x01).
 
@@ -961,29 +961,29 @@ namespace brief
 
     void loop()
     {
-	if (Serial.available())
-	{
-	    int8_t b = Serial.read();
-	    bool isExec = (b & 0x80) == 0x80;
-	    int8_t len = b & 0x7f;
-	    for (; len > 0; len--)
-	    {
-		while(!Serial.available());
-		memset(here++, Serial.read());
-	    }
+        if (Serial.available())
+        {
+            int8_t b = Serial.read();
+            bool isExec = (b & 0x80) == 0x80;
+            int8_t len = b & 0x7f;
+            for (; len > 0; len--)
+            {
+                while(!Serial.available());
+                memset(here++, Serial.read());
+            }
 
-	    if (isExec)
-	    {
-		memset(here++, 0); // ensure return
-		here = last;
-		exec(here);
-	    }
-	    else
-	    {
-		last = here;
-	    }
-	}
-	
+            if (isExec)
+            {
+                memset(here++, 0); // ensure return
+                here = last;
+                exec(here);
+            }
+            else
+            {
+                last = here;
+            }
+        }
+
         if (loopword >= 0)
         {
             exec(loopword);

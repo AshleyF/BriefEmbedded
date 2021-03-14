@@ -1,7 +1,7 @@
 /* Brief.h
 
-   Scriptable firmware for interfacing hardware with the .NET libraries and for
-   running real time control loops. */
+Scriptable firmware for interfacing hardware with the .NET libraries and for
+running real time control loops. */
 
 #define __STDC_LIMIT_MACROS
 #include <Arduino.h>
@@ -10,9 +10,9 @@
 #ifndef BRIEF_H
 #define BRIEF_H
 
-#define MEM_SIZE          512   // dictionary space
-#define DATA_STACK_SIZE   4     // evaluation stack elements (int32s)
-#define RETURN_STACK_SIZE 4     // return and locals stack elements (int32s)
+#define MEM_SIZE          1024  // dictionary space
+#define DATA_STACK_SIZE   8     // evaluation stack elements (int32s)
+#define RETURN_STACK_SIZE 8     // return and locals stack elements (int32s)
 
 #define MAX_PRIMITIVES    128   // max number of primitive (7-bit) instructions
 #define MAX_INTERRUPTS    6     // max number of ISR words
@@ -28,11 +28,11 @@
 
 namespace brief
 {
-    /* The following setup() and loop() are expected to be added to the main *.ino (before Reflecta)
-       as you will find in Brief.ino. */
+    /* The following setup() and loop() are expected to be added to the main *.ino
+    as you will find in Brief.ino. */
 
     void setup(); // initialize everything, bind primitives
-    void loop(); // execute loop word (execute/define driven by Reflecta)
+    void loop(); // execute loop word (execute/define)
 
     /* The following allow peeking/poking the Brief dictionary */
 
@@ -41,14 +41,14 @@ namespace brief
     // TODO: expose `here`, along with appending call, return, literal, etc.
 
     /* The following get/set the program counter; allowing for deeply integrated external instructions
-       that fetch operands or do self-modification */
+    that fetch operands or do self-modification */
 
     int16_t pget();
     void pset(int16_t pp);
 
     /* The following are meant for those wanting to bind their own functions into the Brief system.
-       New functions can be bound to the instruction table, they can push/pop data to interact with
-       other Brief instructions, and they may emit errors up to the PC. */
+    New functions can be bound to the instruction table, they can push/pop data to interact with
+    other Brief instructions, and they may emit errors up to the PC. */
 
     void bind(uint8_t i, void (*f)()); // add function to instruction table
     void push(int16_t x); // push data to evaluation stack
