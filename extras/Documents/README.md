@@ -46,7 +46,7 @@ If you plan to modify the firmware (see Custom Instructions below) then you will
 
 1. Install Arduino IDE
 2. Install TeensyDuino
-3. Install Brief and Reflecta libraries (via the Arduino Library Manager)
+3. Install Brief library (via the Arduino Library Manager)
 
 ![Arduino Library installation](./Media/ArduinoLibrary.png)
 
@@ -60,21 +60,21 @@ Type the following (replacing 'com16 appropriately):
 
 You may see in the photo above that we have a pair of LEDs on pins 0 and 1, as well as an IR sensor on pin 21 (see pinouts for the Teensy 2.0). To initialize a pin:
 
-	output 0 pinMode
+	0 output pinMode
 
 To light up the green LED:
 
-	high 0 digitalWrite
+	0 high digitalWrite
 
 The LED lights up! You can probably guess what the following does:
 
-	low 0 digitalWrite
+	0 low digitalWrite
 
 If you’ve used the Arduino IDE then you recognize that what we’re doing is equivalent to pinMode(0, OUTPUT), digitalWrite(0, HIGH), etc.
 
 Reading sensors is equally easy:
 
-	input 21 pinMode
+	21 input pinMode
 	21 analogRead
 
 This sets up the pin and reads the IR sensor, but where does the value go? It goes onto a stack on the MCU where it can be used by other commands. We can send values back to the host PC with something like:
