@@ -126,7 +126,7 @@ let disassembleBrief dict bytecode =
         let recurse t d = disassemble (d :: dis) t
         let unpackInt16 a b = (int16 a <<< 8 ||| int16 b)
         match b with
-        |  0uy :: x      :: t -> Return |> recurse t
+        |  0uy           :: t -> Return |> recurse t
         |  1uy :: x      :: t -> Literal (x |> sbyte |> int16) |> recurse t
         |  2uy :: a :: b :: t -> Literal (unpackInt16 a b)     |> recurse t
         |  3uy :: x      :: t -> Quote (byte x)                |> recurse t
@@ -147,17 +147,17 @@ let disassembleBrief dict bytecode =
 let printBrief dict b = // Brief to 'words'
     let rec print = function
         | Literal x      -> sprintf "%i" x
-        | Quote x        -> sprintf "(quote%i)" x
+        | Quote x        -> sprintf "(quote %i)" x
         | Word (_, name) -> name
         | NoOperation    -> failwith "NoOperation should not exist in assembled code"
         | User x         ->
             match findCode [|x|] dict with
             | Some def -> def.Word
-            | None -> sprintf "(user%i)" x
+            | None -> sprintf "(user %i)" x
         | brief          ->
             match findBrief brief dict with
             | Some def -> def.Word
-            | None -> sprintf "(unknown-%A)" brief
+            | None -> sprintf "(unknown %A)" brief
     b |> List.map print
 
 (* Below is everything needed to lex/parse/compile Brief source.
@@ -428,9 +428,9 @@ let initDictionary dict address pending =
          "3dip"         , "[swap [2dip] dip]"
          "4dip"         , "[swap [3dip] dip]"
          "keep"         , "[dupd dip]"
-         "2keep"        , "[[2dup] dip 2dip ]"
-         "3keep"        , "[[3dup] dip 3dip ]"
-         "bi"           , "[[keep] dip apply ]"
+         "2keep"        , "[[2dup] dip 2dip]"
+         "3keep"        , "[[3dup] dip 3dip]"
+         "bi"           , "[[keep] dip apply]"
          "2bi"          , "[[2keep] dip apply]"
          "3bi"          , "[[3keep] dip apply]"
          "tri"          , "[[keep] 2dip [keep] dip apply]"
