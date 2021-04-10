@@ -3,6 +3,8 @@ Brief Embedded
 
 Brief Embedded is a scriptable firmware and protocol for interfacing hardware with .NET.
 
+Here's a quick demo: https://youtu.be/M_iiSRowOFM
+
 It may be discovered and installed via the Arduino Library Manager. Just search for "brief" and click Install.
 
 ![Arduino Library installation](./extras/Documents/Media/ArduinoLibrary.png)
