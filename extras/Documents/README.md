@@ -111,7 +111,7 @@ As seen in the demo, Brief is also a Forth-like language. Unless you’ve progra
 
 ## Stack Machines in General
 
-There are some very beautiful stack machines in hardware. Since the mid-80s though, register machines have clearly dominated and stack machines have receded into virtual machines such as the JVM and the CLR.
+There are some very beautiful stack machines in hardware. Since the mid-80s though, register machines have clearly dominated and stack machines have receded into virtual machines such as the JVM, CLR, Ethereum EVM and WebAssembly.
 
 In register machine instruction sets each operator comes packed with operands. An add instruction, for example, needs to know which registers and/or memory locations to sum. In a stack machine virtually all instructions take exactly zero operands. This makes the code extremely compact and also leads to abundant opportunities to factor out redundant sequences.
 
@@ -147,8 +147,8 @@ This makes a word for the pin number to which our green LED is attached. The for
 
 Or, since the definition is a single word, it may be quoted with a tick (`'1 'red def`). Now we don’t have to hardcode these values and the purpose of our code is clearer.
 
-	output green pinMode
-	output red pinMode
+	green output pinMode
+	red output pinMode
 
 Definitions can be multi-word phrases. In fact, whenever you see a sequence of words used repeatedly it is a good candidate to be factored out. It may be going a little overboard but let’s factor out the phrase `output pinMode`.
 
