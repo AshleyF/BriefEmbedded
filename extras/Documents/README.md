@@ -111,7 +111,7 @@ As seen in the demo, Brief is also a Forth-like language. Unless you’ve progra
 
 ## Stack Machines in General
 
-There are some very beautiful stack machines in hardware. Since the mid-80s though, register machines have clearly dominated and stack machines have receded into virtual machines such as the JVM, CLR, Ethereum EVM and WebAssembly.
+There are some very beautiful stack machines in hardware. Since the mid-80s though, register machines have clearly dominated and stack machines have receded into virtual machines such as the JVM, the CLR, the Ethereum EVM and the WebAssembly.
 
 In register machine instruction sets each operator comes packed with operands. An add instruction, for example, needs to know which registers and/or memory locations to sum. In a stack machine virtually all instructions take exactly zero operands. This makes the code extremely compact and also leads to abundant opportunities to factor out redundant sequences.
 
