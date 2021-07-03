@@ -60,21 +60,21 @@ Type the following (replacing 'com16 appropriately):
 
 You may see in the photo above that we have a pair of LEDs on pins 0 and 1, as well as an IR sensor on pin 21 (see pinouts for the Teensy 2.0). To initialize a pin:
 
-	0 output pinMode
+	output 0 pinMode
 
 To light up the green LED:
 
-	0 high digitalWrite
+	high 0 digitalWrite
 
 The LED lights up! You can probably guess what the following does:
 
-	0 low digitalWrite
+	low 0 digitalWrite
 
-If you’ve used the Arduino IDE then you recognize that what we’re doing is equivalent to pinMode(0, OUTPUT), digitalWrite(0, HIGH), etc.
+If you’ve used the Arduino IDE then you recognize that what we’re doing is equivalent to `pinMode(0, OUTPUT)`, `digitalWrite(0, HIGH)`, etc.
 
 Reading sensors is equally easy:
 
-	21 input pinMode
+	input 21 pinMode
 	21 analogRead
 
 This sets up the pin and reads the IR sensor, but where does the value go? It goes onto a stack on the MCU where it can be used by other commands. We can send values back to the host PC with something like:
@@ -147,12 +147,12 @@ This makes a word for the pin number to which our green LED is attached. The for
 
 Or, since the definition is a single word, it may be quoted with a tick (`'1 'red def`). Now we don’t have to hardcode these values and the purpose of our code is clearer.
 
-	green output pinMode
-	red output pinMode
+	output green pinMode
+	output red pinMode
 
 Definitions can be multi-word phrases. In fact, whenever you see a sequence of words used repeatedly it is a good candidate to be factored out. It may be going a little overboard but let’s factor out the phrase `output pinMode`.
 
-	[output pinMode] 'outmode def
+	[output swap pinMode] 'outmode def
 
 It may seem strange to take a sequence expecting parameters and separate it into a new definition with the parameters missing. Our new `outmode` word expects a pin number on the stack and sets the mode. This is the elegance of the stack machine and of our syntax matching those semantics.
 
@@ -165,7 +165,7 @@ Back to our refactoring, the following is a little more succinct now:
 
 Let’s see what we can do about the “nightlight” example:
 
-	21 analogRead 40 < [0 high digitalWrite] [0 low digitalWrite] choice
+	21 analogRead 40 < [high 0 digitalWrite] [low 0 digitalWrite] choice
 
 Let’s give a few of the phrases names:
 
