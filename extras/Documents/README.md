@@ -60,21 +60,21 @@ Type the following (replacing 'com16 appropriately):
 
 You may see in the photo above that we have a pair of LEDs on pins 0 and 1, as well as an IR sensor on pin 21 (see pinouts for the Teensy 2.0). To initialize a pin:
 
-	0 output pinMode
+	output 0 pinMode
 
 To light up the green LED:
 
-	0 high digitalWrite
+	high 0 digitalWrite
 
 The LED lights up! You can probably guess what the following does:
 
-	0 low digitalWrite
+	low 0 digitalWrite
 
-If you’ve used the Arduino IDE then you recognize that what we’re doing is equivalent to pinMode(0, OUTPUT), digitalWrite(0, HIGH), etc.
+If you’ve used the Arduino IDE then you recognize that what we’re doing is equivalent to `pinMode(0, OUTPUT)`, `digitalWrite(0, HIGH)`, etc.
 
 Reading sensors is equally easy:
 
-	21 input pinMode
+	input 21 pinMode
 	21 analogRead
 
 This sets up the pin and reads the IR sensor, but where does the value go? It goes onto a stack on the MCU where it can be used by other commands. We can send values back to the host PC with something like:
@@ -147,12 +147,12 @@ This makes a word for the pin number to which our green LED is attached. The for
 
 Or, since the definition is a single word, it may be quoted with a tick (`'1 'red def`). Now we don’t have to hardcode these values and the purpose of our code is clearer.
 
-	green output pinMode
-	red output pinMode
+	output green pinMode
+	output red pinMode
 
-Definitions can be multi-word phrases. In fact, whenever you see a sequence of words used repeatedly it is a good candidate to be factored out. It may be going a little overboard but let’s factor out the phrase `output pinMode`.
+Definitions can be multi-word phrases. In fact, whenever you see a sequence of words used repeatedly it is a good candidate to be factored out. It may be going a little overboard but let’s factor out the phrase `output <pin> pinMode`.
 
-	[output pinMode] 'outmode def
+	[output swap pinMode] 'outmode def
 
 It may seem strange to take a sequence expecting parameters and separate it into a new definition with the parameters missing. Our new `outmode` word expects a pin number on the stack and sets the mode. This is the elegance of the stack machine and of our syntax matching those semantics.
 
@@ -165,7 +165,7 @@ Back to our refactoring, the following is a little more succinct now:
 
 Let’s see what we can do about the “nightlight” example:
 
-	21 analogRead 40 < [0 high digitalWrite] [0 low digitalWrite] choice
+	21 analogRead 40 < [high 0 digitalWrite] [low 0 digitalWrite] choice
 
 Let’s give a few of the phrases names:
 
@@ -192,17 +192,17 @@ To get just an ever so tiny glimpse, let’s define a language for controlling a
 	[6 4 9] 'right def
 
 	[swap digitalWrite] 'pin def
-	[swap analogWrite] 'power def
+	'analogWrite 'power def
 
-	[low  pin high pin power] 'cw def
-	[high pin low  pin power] 'ccw def
-	[high pin high pin 0 swap analogWrite] 'stop def
+	[low pin high pin power] 'cw def
+	[high pin low pin power] 'ccw def
+	[high pin high pin 0 swap power] 'stop def
 
 The `left`/`right` words push pin numbers which, along with a power value expected on the stack, is used to cause clockwise (`cw`) or counter-clockwise (`ccw`) driving.
 
 We can further define:
 
-	[dup left cw  right cw]  'forward  def
+	[dup left cw right cw] 'forward def
 	[dup left ccw right ccw] 'backward def
 
 Now we can say phrases like:
@@ -230,18 +230,21 @@ If we define our nightlight sequence as a new word:
 
 	[sensor dark? green digitalWrite] 'nightlight def
 
-We can add it to the main control loop with setLoop:
+We can add it to the main control loop with `setLoop`:
 
 	'nightlight setLoop
 
-Now the PC is completely out of the loop (literally). The LED responds immediately as you can move your hand over the sensor and back away from the sensor. Stop the loop whenever you like with stopLoop.
+Now the PC is completely out of the loop (literally). The LED responds immediately as you can move your hand over the sensor and back away from the sensor. Stop the loop whenever you like with `stopLoop`.
 
 Have fun with it!
+
+	[high swap digitalWrite] 'on def
+	[low swap digitalWrite] 'off def
 
 	[200 delay] 'pause def
 	[red on green on pause red off green on pause] 'blink def
 	'blink setLoop
- 
+
 Notice that we’re using a delay word to do a blocking pause. This isn’t a Brief primitive. It is a custom instruction added below in the Custom Instructions section.
 
 ## Triggered Events
@@ -275,7 +278,7 @@ A packed heartbeat can reasonably be expected to achieve frequencies approaching
 
 ## Attaching Interrupts
 
-You can attach Brief words as interrupt routines with attachInterrupt which, like setLoop, expects the address of a word to attach.
+You can attach Brief words as interrupt routines with `attachInterrupt` which, like `setLoop`, expects the address of a word to attach.
 
 For example, to turn on the LED when interrupt zero signals a change you can simply say:
 
@@ -292,7 +295,7 @@ So far we have been exploring Brief in a sparse top-down fashion. Now that you h
 
 ## Brief VM
 
-The Brief VM is a stack machine executing single-byte instructions. There are some very beautiful stack machines in hardware, but since the mid-80s register machines have clearly dominated and stack machines have receded into virtual machines such as the JVM and the CLR.
+The Brief VM is a stack machine executing single-byte instructions. There are some very beautiful stack machines in hardware, but since the mid-80s register machines have clearly dominated and stack machines have receded into virtual machines such as the JVM, the CLR, the Ethereum VM (EVM) and the WebAssembly.
 
 ### Two Stacks and a Dictionary
 
