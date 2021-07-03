@@ -150,7 +150,7 @@ Or, since the definition is a single word, it may be quoted with a tick (`'1 're
 	output green pinMode
 	output red pinMode
 
-Definitions can be multi-word phrases. In fact, whenever you see a sequence of words used repeatedly it is a good candidate to be factored out. It may be going a little overboard but let’s factor out the phrase `output pinMode`.
+Definitions can be multi-word phrases. In fact, whenever you see a sequence of words used repeatedly it is a good candidate to be factored out. It may be going a little overboard but let’s factor out the phrase `output <pin> pinMode`.
 
 	[output swap pinMode] 'outmode def
 
