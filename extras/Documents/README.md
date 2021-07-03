@@ -278,7 +278,7 @@ A packed heartbeat can reasonably be expected to achieve frequencies approaching
 
 ## Attaching Interrupts
 
-You can attach Brief words as interrupt routines with attachInterrupt which, like setLoop, expects the address of a word to attach.
+You can attach Brief words as interrupt routines with `attachInterrupt` which, like `setLoop`, expects the address of a word to attach.
 
 For example, to turn on the LED when interrupt zero signals a change you can simply say:
 
@@ -295,7 +295,7 @@ So far we have been exploring Brief in a sparse top-down fashion. Now that you h
 
 ## Brief VM
 
-The Brief VM is a stack machine executing single-byte instructions. There are some very beautiful stack machines in hardware, but since the mid-80s register machines have clearly dominated and stack machines have receded into virtual machines such as the JVM and the CLR.
+The Brief VM is a stack machine executing single-byte instructions. There are some very beautiful stack machines in hardware, but since the mid-80s register machines have clearly dominated and stack machines have receded into virtual machines such as the JVM, the CLR, the Ethereum VM (EVM) and the WebAssembly.
 
 ### Two Stacks and a Dictionary
 
