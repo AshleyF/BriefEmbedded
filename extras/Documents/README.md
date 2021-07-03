@@ -230,18 +230,21 @@ If we define our nightlight sequence as a new word:
 
 	[sensor dark? green digitalWrite] 'nightlight def
 
-We can add it to the main control loop with setLoop:
+We can add it to the main control loop with `setLoop`:
 
 	'nightlight setLoop
 
-Now the PC is completely out of the loop (literally). The LED responds immediately as you can move your hand over the sensor and back away from the sensor. Stop the loop whenever you like with stopLoop.
+Now the PC is completely out of the loop (literally). The LED responds immediately as you can move your hand over the sensor and back away from the sensor. Stop the loop whenever you like with `stopLoop`.
 
 Have fun with it!
+
+	[high swap digitalWrite] 'on def
+	[low swap digitalWrite] 'off def
 
 	[200 delay] 'pause def
 	[red on green on pause red off green on pause] 'blink def
 	'blink setLoop
- 
+
 Notice that we’re using a delay word to do a blocking pause. This isn’t a Brief primitive. It is a custom instruction added below in the Custom Instructions section.
 
 ## Triggered Events
