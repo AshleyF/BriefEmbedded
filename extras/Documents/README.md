@@ -192,17 +192,17 @@ To get just an ever so tiny glimpse, let’s define a language for controlling a
 	[6 4 9] 'right def
 
 	[swap digitalWrite] 'pin def
-	[swap analogWrite] 'power def
+	'analogWrite 'power def
 
-	[low  pin high pin power] 'cw def
-	[high pin low  pin power] 'ccw def
-	[high pin high pin 0 swap analogWrite] 'stop def
+	[low pin high pin power] 'cw def
+	[high pin low pin power] 'ccw def
+	[high pin high pin 0 swap power] 'stop def
 
 The `left`/`right` words push pin numbers which, along with a power value expected on the stack, is used to cause clockwise (`cw`) or counter-clockwise (`ccw`) driving.
 
 We can further define:
 
-	[dup left cw  right cw]  'forward  def
+	[dup left cw right cw] 'forward def
 	[dup left ccw right ccw] 'backward def
 
 Now we can say phrases like:
