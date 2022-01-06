@@ -52,7 +52,7 @@ If you plan to modify the firmware (see Custom Instructions below) then you will
 
 ### Interactive Console
 
-Once the firmware has been flashed, launch Interactive.exe, which is [built from this project](https://github.com/AshleyF/BriefEmbedded/tree/master/extras/Interactive). It is a .NET Core app and works on Linux, macOS and Windows. This is an interactive console giving you full control of the MCU. It can be used to experiment with and to even program it.
+Once the firmware has been flashed, launch `Interactive.exe`, which is [built from this project](https://github.com/AshleyF/BriefEmbedded/tree/master/extras/Interactive). It is a .NET Core app and works on Linux, macOS and Windows. This is an interactive console giving you full control of the MCU. It can be used to experiment with and to even program it.
 
 Type the following (replacing 'com16 appropriately):
 
