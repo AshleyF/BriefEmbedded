@@ -325,10 +325,10 @@ namespace brief
         memset(a + 1, v);
     }
 
-    /* Literal values are pushed to the stack by the `lit8`/`lit16` instructions. The values is a
-    parameter to the instruction. Literals (as well as branches below) are one of the few
+    /* Literal values are pushed to the stack by the `lit8`/`lit16` instructions. The value is a
+    parameter to the instruction. Literals (as well as `quote` below) are one of the few
     instructions to actually have operands. This is done by consuming the bytes at the current
-    program counter and advancing the counter to skip them for execution. */
+    program counter, as a signed value, and advancing the counter to skip them for execution. */
 
     void lit8()
     {
@@ -547,8 +547,8 @@ namespace brief
     /* Quotations and `choice` need some explanation. The idea behind quotations is something like
     an anonymous lambda and is used with some nice syntax in the Brief language. The `quote`
     instruction precedes a sequence that is to be treated as an embedded definition
-    essentially. It takes a length as an operand, pushes the address of the sequence of code
-    following and then jumps over that code.
+    essentially. It takes the following byte as an unsigned length operand, pushes the address of
+    the sequence of code following and then jumps over that code.
 
     The net result is that the sequence is not executed, but its address is left on the stack
     for future words to call as they see fit.
@@ -588,21 +588,6 @@ namespace brief
         }
     }
 
-    void next()
-    {
-        int16_t count = rpop() - 1;
-        int16_t rel = memget(p++);
-        if (count > 0)
-        {
-            rpush(count);
-            p -= (rel + 2);
-        }
-    }
-
-    void nop()
-    {
-    }
-
     /* A Brief word (address) may be set to run in the main loop. Also, a loop counter is
     maintained for use by conditional logic (throttling for example). */
 
@@ -629,7 +614,7 @@ namespace brief
     /* Upon first connecting to a board, the PC will execute a reset so that assumptions about
     dictionary contents and such hold true. */ 
 
-    void resetBoard() // likely called initialy upon connecting from PC
+    void resetBoard() // likely called initially upon connecting from PC
     {
         clr();
         here = last = 0;
@@ -932,8 +917,6 @@ namespace brief
         bind(55, detachISR);
         bind(56, milliseconds);
         bind(57, pulseIn);
-        bind(58, next);
-        bind(59, nop);
 
         for (int16_t i = 0; i < MAX_INTERRUPTS; i++)
         {

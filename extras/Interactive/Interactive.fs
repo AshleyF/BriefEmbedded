@@ -1,5 +1,5 @@
 (* This is a very basic interactive console for working with an MCU running the Brief firmware.
-   This is extreemely useful for debugging and experimenting with new hardware; allowing interactive
+   This is extremely useful for debugging and experimenting with new hardware; allowing interactive
    compilation and execution Brief code as well as adding of definitions to the dictionary.
 
    The full Brief language syntax is available. Additionally, there are several "compile-time" words
@@ -48,7 +48,7 @@ let comm =
         [foo bar] 'baz define
 
     That is, a compile-time quotation containing the definition, followed by a quotation containing
-    a single (not necessarily defined word) usually abreviated with a tick, but [baz] is equally
+    a single (not necessarily defined word) usually abbreviated with a tick, but [baz] is equally
     valid. These two compile-time arguments are followed by define or def. Examples:
 
         [dup *] 'square def
